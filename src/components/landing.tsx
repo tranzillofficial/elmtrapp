@@ -22,7 +22,7 @@ import {
   Plus,
   Crown,
 } from "lucide-react";
-import { pricing } from "@/lib/pricing";
+import { usePricing } from "@/lib/pricing";
 const benefits = [
   {
     Icon: FolderOpen,
@@ -47,8 +47,8 @@ const benefits = [
 ];
 const faqs = [
   {
-    q: "الـ 2800 جنيه اشتراك ولا دفع مرة واحدة؟",
-    a: "2800 جنيه هي رسوم تفعيل السيستم مرة واحدة للباقة الأساسية. اشتراك البرو اختياري، ويُضاف إلى سعر السيستم إذا احتجت المميزات الإضافية.",
+    q: "سعر النظام اشتراك ولا دفع مرة واحدة؟",
+    a: "سعر الشراء المعروض هو رسوم تفعيل السيستم مرة واحدة للباقة الأساسية. اشتراك البرو اختياري، ويُضاف إلى سعر السيستم إذا احتجت المميزات الإضافية.",
   },
   {
     q: "إيه الفرق بين الأساسي والبرو؟",
@@ -68,13 +68,19 @@ const faqs = [
   },
 ];
 export function Landing() {
+  const pricing = usePricing();
+  const saving = Math.max(0, pricing.annualBeforeDiscount - pricing.annual);
+  const savingPercent =
+    pricing.annualBeforeDiscount > 0
+      ? Math.round((saving / pricing.annualBeforeDiscount) * 100)
+      : 0;
   const [period, setPeriod] = useState<"monthly" | "annual">("annual");
   return (
     <div className="landing" dir="rtl">
       <header className="lp-header">
         <div className="lp-container lp-nav">
           <Link className="lp-brand" href="/">
-            elmtrapp<span>مكتبك القانوني</span>
+            Elmtr App<span>مكتبك القانوني</span>
           </Link>
           <nav aria-label="تنقل الصفحة">
             <a href="#features">المميزات</a>
@@ -245,7 +251,7 @@ export function Landing() {
           <div className="lp-pro-copy">
             <span className="lp-kicker">
               <Crown size={15} />
-              elmtrapp PRO
+              Elmtr App PRO
             </span>
             <h2>
               مساحة أوسع
@@ -321,6 +327,11 @@ export function Landing() {
           </div>
         </section>
         <section className="lp-section lp-pricing-section" id="pricing">
+          <p className="hint">
+            الحسابات الفرعية للمكتب: {pricing.seatMonthly} جنيه شهريًا أو{" "}
+            {pricing.seatAnnual} جنيه سنويًا للحساب، بتفعيل من الأدمن وصلاحيات
+            مستقلة لكل محامٍ.
+          </p>
           <div className="lp-container">
             <div className="lp-section-heading lp-centered">
               <span className="lp-kicker">استثمار واضح لمكتبك</span>
@@ -369,7 +380,11 @@ export function Landing() {
                 </Link>
               </article>
               <article className="lp-price-card lp-price-pro">
-                <span className="lp-savings">وفّر ١٬٠٠٠ جنيه مع السنوي</span>
+                {saving > 0 && (
+                  <span className="lp-savings">
+                    وفّر {saving.toLocaleString("ar-EG")} جنيه مع السنوي
+                  </span>
+                )}
                 <div className="lp-card-label">
                   <Crown size={21} />
                   اشتراك PRO
@@ -390,7 +405,10 @@ export function Landing() {
                     aria-pressed={period === "annual"}
                     onClick={() => setPeriod("annual")}
                   >
-                    سنوي <span>وفّر ٣٣٪</span>
+                    سنوي{" "}
+                    {savingPercent > 0 && (
+                      <span>وفّر {savingPercent.toLocaleString("ar-EG")}٪</span>
+                    )}
                   </button>
                 </div>
                 <div className="lp-price">
@@ -405,7 +423,7 @@ export function Landing() {
                     <br />
                     <b>/{period === "annual" ? "السنة" : "الشهر"}</b>
                   </span>
-                  {period === "annual" && (
+                  {period === "annual" && saving > 0 && (
                     <del aria-label="السعر السنوي قبل الخصم">
                       {pricing.annualBeforeDiscount.toLocaleString("ar-EG")}
                     </del>
@@ -478,7 +496,7 @@ export function Landing() {
       </main>
       <footer className="lp-footer lp-container">
         <Link className="lp-brand" href="/">
-          elmtrapp<span>مكتبك القانوني في مكان واحد</span>
+          Elmtr App<span>مكتبك القانوني في مكان واحد</span>
         </Link>
         <p>إدارة أوضح لمكتب المحاماة.</p>
         <div>
@@ -502,7 +520,7 @@ function ProductPreview() {
       </div>
       <div className="lp-preview-app">
         <aside>
-          <b>elmtrapp</b>
+          <b>Elmtr App</b>
           {[
             { Icon: FolderOpen, text: "نظرة عامة" },
             { Icon: CalendarDays, text: "الجلسات" },

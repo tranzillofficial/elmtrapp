@@ -20,8 +20,24 @@ import {
   balance,
 } from "@/lib/types";
 import { localFile, removeLocalFile } from "@/lib/files";
+import { sampleLaws, sampleArticles } from "@/lib/legal-sample";
 const KEY = "elmtrapp-demo-v1";
+export type OfficeContext = {
+  owner_id: string;
+  admin: boolean;
+  member: boolean;
+  permissions: string[];
+  active: boolean;
+};
+const defaultOffice: OfficeContext = {
+  owner_id: "",
+  admin: false,
+  member: false,
+  permissions: [],
+  active: true,
+};
 type Store = {
+  office: OfficeContext;
   data: Data;
   loading: boolean;
   demo: boolean;
@@ -42,7 +58,12 @@ type Store = {
     id?: string,
   ) => Promise<void>;
   remove: (table: Table, id: string) => Promise<void>;
-  upload: (caseId: string, file: File, text?: string) => Promise<void>;
+  upload: (
+    caseId: string,
+    file: File,
+    text?: string,
+    target?: "case" | "client",
+  ) => Promise<void>;
   openDocument: (id: string) => Promise<void>;
   saveProfile: (p: Profile) => Promise<void>;
   resetDemo: () => void;
@@ -62,6 +83,7 @@ export function Provider({
   initialDemo?: boolean;
   forceAuth?: boolean;
 }) {
+  const [office, setOffice] = useState<OfficeContext>(defaultOffice);
   const [data, setDataState] = useState<Data>(EMPTY),
     [loading, setLoading] = useState(true),
     [demo, setDemo] = useState(false),
@@ -92,7 +114,11 @@ export function Provider({
     generation.current++;
     try {
       const v = localStorage.getItem(KEY);
-      setData(v ? JSON.parse(v) : demoData());
+      setData(
+        v
+          ? { ...JSON.parse(v), laws: sampleLaws, articles: sampleArticles }
+          : demoData(),
+      );
     } catch {
       setData(demoData());
     }
@@ -102,6 +128,7 @@ export function Provider({
     } catch {
       setProfile(defaultProfile);
     }
+    setOffice(defaultOffice);
     setDemo(true);
     setLoading(false);
     setError("");
@@ -133,6 +160,15 @@ export function Provider({
       }
       currentUser.current = user.id;
       setUser(user);
+      const context = await supabase.rpc("office_context");
+      if (context.error) throw context.error;
+      const officeContext = context.data as OfficeContext;
+      if (!officeContext.active) {
+        setData(EMPTY);
+        setOffice(officeContext);
+        throw new Error("الحساب الفرعي موقوف أو انتهت باقة المكتب");
+      }
+      setOffice(officeContext);
       const tables = Object.keys(EMPTY) as Table[];
       const load = async (table: Table) => {
         const rows: unknown[] = [];
@@ -158,7 +194,7 @@ export function Provider({
         supabase
           .from("entitlements")
           .select("plan,expires_at")
-          .eq("owner_id", user.id)
+          .eq("owner_id", officeContext.owner_id)
           .maybeSingle(),
       ]);
       if (revision !== generation.current || demoRef.current) return;
@@ -169,6 +205,15 @@ export function Provider({
       for (const t of ["clients", "cases", "notes", "documents"] as const)
         next[t].sort((a, b) => b.created_at.localeCompare(a.created_at));
       setData(next);
+      if (!p.data) {
+        const created = await supabase.from("profiles").upsert({
+          id: user.id,
+          full_name: user.user_metadata.full_name ?? "المحامي",
+          office_name: defaultProfile.office_name,
+          phone: "",
+        });
+        if (created.error) throw created.error;
+      }
       setProfile(
         p.data ?? {
           ...defaultProfile,
@@ -237,6 +282,13 @@ export function Provider({
     id?: string,
   ) => {
     const data = dataRef.current;
+    if (
+      office.member &&
+      (!office.active ||
+        !office.permissions.includes("write") ||
+        !office.permissions.includes(table === "bookmarks" ? "library" : table))
+    )
+      throw new Error("ليست لديك صلاحية تعديل هذا القسم");
     if (["laws", "articles"].includes(table))
       throw new Error("المرجع يُدار من قاعدة البيانات فقط");
     if (demo) {
@@ -297,7 +349,7 @@ export function Provider({
       setData(next);
     } else {
       if (!supabase || !user) throw new Error("سجل الدخول أولًا");
-      const payload = { ...values, owner_id: user.id };
+      const payload = { ...values, owner_id: office.owner_id || user.id };
       const q = id
         ? supabase.from(table).update(payload).eq("id", id)
         : supabase.from(table).insert(payload);
@@ -308,6 +360,13 @@ export function Provider({
     setNotice("تم الحفظ بنجاح");
   };
   const remove = async (table: Table, id: string) => {
+    if (
+      office.member &&
+      (!office.active ||
+        !office.permissions.includes("write") ||
+        !office.permissions.includes(table === "bookmarks" ? "library" : table))
+    )
+      throw new Error("ليست لديك صلاحية تعديل هذا القسم");
     const data = dataRef.current;
     if (demo) {
       const next = { ...data };
@@ -328,7 +387,12 @@ export function Provider({
     }
     setNotice("تم الحذف");
   };
-  const upload = async (caseId: string, file: File, text = "") => {
+  const upload = async (
+    caseId: string,
+    file: File,
+    text = "",
+    target: "case" | "client" = "case",
+  ) => {
     if (file.size === 0) throw new Error("الملف فارغ");
     if (file.size > 20 * 1024 * 1024)
       throw new Error("الحد الأقصى لحجم الملف ٢٠ ميجابايت");
@@ -338,7 +402,7 @@ export function Provider({
       )
     )
       throw new Error("استخدم PDF أو JPG أو PNG أو WebP");
-    const path = `${user?.id ?? "demo"}/${caseId}/${crypto.randomUUID()}.${file.type === "application/pdf" ? "pdf" : file.type.split("/")[1]}`;
+    const path = `${demo ? "demo" : office.owner_id || user?.id}/${target === "client" ? "clients/" : ""}${caseId}/${crypto.randomUUID()}.${file.type === "application/pdf" ? "pdf" : file.type.split("/")[1]}`;
     if (demo) await localFile(path, file);
     else {
       const { error } = await supabase!.storage
@@ -348,7 +412,8 @@ export function Provider({
     }
     try {
       await save("documents", {
-        case_id: caseId,
+        case_id: target === "case" ? caseId : null,
+        client_id: target === "client" ? caseId : null,
         name: file.name,
         path,
         mime_type: file.type,
@@ -402,6 +467,7 @@ export function Provider({
   return (
     <Context.Provider
       value={{
+        office,
         data,
         loading,
         demo,

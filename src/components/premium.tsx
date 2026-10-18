@@ -212,18 +212,38 @@ export function Assistant() {
     );
     return () => cancelAnimationFrame(frame);
   }, []);
-  useEffect(
-    () =>
-      bottom.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }),
-    [messages, busy],
-  );
+  useEffect(() => {
+    bottom.current?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }, [messages, busy]);
   const send = async (text = prompt) => {
     if (!text.trim() || busy || !premium) return;
     setError("");
     if (demo) {
-      setError(
-        "لتشغيل التحليل الفعلي، اربط Supabase وسجل الدخول وفعّل الاشتراك واضبط مفتاح AI Gateway. لا يتم توليد تحليل وهمي في المعاينة.",
-      );
+      const c = data.cases.find((c) => c.id === caseId);
+      if (!c) {
+        setError("اختر قضية أولًا");
+        return;
+      }
+      setMessages((v) => [
+        ...v,
+        { role: "user", text: text },
+        {
+          role: "assistant",
+          text: `محاكاة توضيحية للبرو — ليست تحليلًا بالذكاء الاصطناعي أو رأيًا قانونيًا.
+
+القضية: ${c.title}
+الملخص المسجل: ${c.summary || "لا يوجد ملخص"}
+
+قائمة مراجعة تجريبية:
+• راجع التوكيل وصفة الأطراف.
+• رتب المستندات والأحداث زمنيًا.
+• تحقق من الاختصاص والمواعيد وفق النصوص السارية.
+• دوّن الأسئلة والمستندات الناقصة قبل الجلسة.
+
+يمكنك تجربة البحث وحفظ المواد في مرجع القانون. التحليل الفعلي يحتاج ربط مزود AI وتفعيل البرو.`,
+        },
+      ]);
+      setPrompt("");
       return;
     }
     if (!caseId) {

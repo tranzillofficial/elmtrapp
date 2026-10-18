@@ -1,4 +1,5 @@
 import { Data, EMPTY } from "./types";
+import { sampleLaws, sampleArticles } from "./legal-sample";
 export function demoData(): Data {
   const now = new Date();
   const date = (offset: number, hour = 10) => {
@@ -10,6 +11,8 @@ export function demoData(): Data {
   const created_at = date(-30);
   return {
     ...EMPTY,
+    laws: sampleLaws,
+    articles: sampleArticles,
     clients: [
       {
         id: "demo-client-1",

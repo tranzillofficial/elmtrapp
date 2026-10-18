@@ -53,7 +53,8 @@ export type Payment = {
 export type Document = {
   id: string;
   owner_id?: string;
-  case_id: string;
+  case_id: string | null;
+  client_id?: string | null;
   name: string;
   path: string;
   mime_type: string;

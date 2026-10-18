@@ -26,6 +26,7 @@ async function loadImage(url: string) {
 }
 export function Scanner() {
   const { data, upload, setNotice } = useStore();
+  const [clientTarget, setClientTarget] = useState(false);
   const [caseId, setCaseId] = useState(""),
     [camera, setCamera] = useState(false),
     [source, setSource] = useState(""),
@@ -42,9 +43,11 @@ export function Scanner() {
     sourceRef = useRef(""),
     pagesRef = useRef<Page[]>([]);
   useEffect(() => {
-    const frame = requestAnimationFrame(() =>
-      setCaseId(new URLSearchParams(window.location.search).get("case") ?? ""),
-    );
+    const frame = requestAnimationFrame(() => {
+      const q = new URLSearchParams(window.location.search);
+      setClientTarget(q.has("client"));
+      setCaseId(q.get("client") ?? q.get("case") ?? "");
+    });
     return () => cancelAnimationFrame(frame);
   }, []);
   useEffect(() => {
@@ -236,7 +239,7 @@ export function Scanner() {
   };
   const save = async () => {
     if (!caseId) {
-      setError("اختر القضية التي تريد إرفاق المستند بها");
+      setError("اختر العميل أو القضية لإرفاق المستند");
       return;
     }
     setBusy(true);
@@ -268,13 +271,14 @@ export function Scanner() {
           { type: "application/pdf" },
         ),
         transcript,
+        clientTarget ? "client" : "case",
       );
       pages.forEach((p) => URL.revokeObjectURL(p.url));
       setPages([]);
       if (source) URL.revokeObjectURL(source);
       setSource("");
       setTranscript("");
-      setNotice("تم حفظ المستند في ملف القضية");
+      setNotice("تم حفظ المستند");
     } catch (e) {
       setError(e instanceof Error ? e.message : "تعذر حفظ المستند");
     } finally {
@@ -457,13 +461,32 @@ export function Scanner() {
         <aside>
           <section className="panel">
             <h2>حفظ المستند</h2>
-            <Field label="إرفاق بالقضية">
+            <button
+              type="button"
+              className="text-button"
+              onClick={() => {
+                setClientTarget((v) => !v);
+                setCaseId("");
+              }}
+            >
+              التبديل إلى {clientTarget ? "قضية" : "مستند عميل"}
+            </button>
+            <Field label={clientTarget ? "إرفاق بالعميل" : "إرفاق بالقضية"}>
               <select
                 value={caseId}
                 onChange={(e) => setCaseId(e.target.value)}
               >
-                <option value="">اختر القضية</option>
-                {data.cases.map((c) => (
+                <option value="">
+                  اختر {clientTarget ? "العميل" : "القضية"}
+                </option>
+                {(clientTarget
+                  ? data.clients.map((c) => ({
+                      id: c.id,
+                      title: c.name,
+                      number: "",
+                    }))
+                  : data.cases
+                ).map((c) => (
                   <option value={c.id} key={c.id}>
                     {c.title} — {c.number}
                   </option>
@@ -518,7 +541,11 @@ export function Scanner() {
               ) : (
                 <FileDown size={17} />
               )}{" "}
-              {busy ? "جارٍ الحفظ..." : "حفظ في القضية"}
+              {busy
+                ? "جارٍ الحفظ..."
+                : clientTarget
+                  ? "حفظ في ملف العميل"
+                  : "حفظ في القضية"}
             </button>
           </section>
           {!data.cases.length && (

@@ -70,6 +70,7 @@ export function App({
 }
 function Shell() {
   const {
+    office,
     loading,
     demo,
     user,
@@ -109,7 +110,7 @@ function Shell() {
   if (loading && !user && !demo)
     return (
       <div className="loading-screen">
-        <span className="brand">elmtrapp</span>
+        <span className="brand">Elmtr App</span>
         <LoaderCircle className="spin" />
         <p>جارٍ تجهيز مكتبك...</p>
       </div>
@@ -166,6 +167,14 @@ function Shell() {
         />
       );
   }
+  const feature = route[0] === "scanner" ? "documents" : route[0];
+  if (
+    office.member &&
+    feature &&
+    !["dashboard", "demo", "settings", "login"].includes(feature) &&
+    !office.permissions.includes(feature)
+  )
+    content = <Empty title="هذا القسم غير متاح ضمن صلاحيات حسابك" />;
   const upcoming = data.hearings
     .filter(
       (h) =>
@@ -180,23 +189,32 @@ function Shell() {
         className="brand"
         onClick={() => setDrawer(false)}
       >
-        elmtrapp<span>مكتبك القانوني في مكان واحد</span>
+        Elmtr App<span>مكتبك القانوني في مكان واحد</span>
       </Link>
       <div className="sidebar-label">مساحة العمل</div>
       <nav>
-        {navigation.map(({ href, label, Icon, pro }) => (
-          <Link
-            key={href}
-            href={href}
-            aria-current={selected(href) ? "page" : undefined}
-            className={`nav-item ${selected(href) ? "active" : ""}`}
-            onClick={() => setDrawer(false)}
-          >
-            <Icon size={19} />
-            <span>{label}</span>
-            {pro && <span className="pro-tag">PRO</span>}
-          </Link>
-        ))}
+        {navigation
+          .filter(
+            (n) =>
+              !office.member ||
+              ["/dashboard", "/settings"].includes(n.href) ||
+              office.permissions.includes(
+                n.href === "/scanner" ? "documents" : n.href.slice(1),
+              ),
+          )
+          .map(({ href, label, Icon, pro }) => (
+            <Link
+              key={href}
+              href={href}
+              aria-current={selected(href) ? "page" : undefined}
+              className={`nav-item ${selected(href) ? "active" : ""}`}
+              onClick={() => setDrawer(false)}
+            >
+              <Icon size={19} />
+              <span>{label}</span>
+              {pro && <span className="pro-tag">PRO</span>}
+            </Link>
+          ))}
       </nav>
       <div className="sidebar-footer">
         <Scale size={23} />
@@ -205,7 +223,7 @@ function Shell() {
           <br />
           والتنظيم علينا.
         </strong>
-        <span>elmtrapp · مساحة أكثر وضوحًا</span>
+        <span>Elmtr App · مساحة أكثر وضوحًا</span>
       </div>
     </>
   );
@@ -223,7 +241,7 @@ function Shell() {
             <Menu size={21} />
           </IconButton>
           <Link className="mobile-brand" href="/">
-            elmtrapp
+            Elmtr App
           </Link>
           <div className="topbar-actions">
             <IconButton
@@ -279,7 +297,7 @@ function Shell() {
           {content}
         </main>
         <footer className="desktop-footer">
-          elmtrapp <span>مكتب أكثر تنظيمًا. وقت أكثر لقضاياك.</span>
+          Elmtr App <span>مكتب أكثر تنظيمًا. وقت أكثر لقضاياك.</span>
         </footer>
       </div>
       <nav className="bottom-nav" aria-label="التنقل الرئيسي">

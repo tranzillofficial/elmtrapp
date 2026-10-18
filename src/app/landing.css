@@ -4,7 +4,7 @@
   --lp-text: #24272d;
   --lp-muted: #777b82;
   --lp-line: #e8e6e0;
-  --lp-gold: #ac812f;
+  --lp-gold: #087f8c;
   background: var(--lp-bg);
   color: var(--lp-text);
   min-height: 100vh;
@@ -81,16 +81,16 @@
     background 0.2s;
 }
 .lp-button:hover {
-  background: #3c3a32;
+  background: #323c3b;
   transform: translateY(-2px);
 }
 .lp-button.lp-small {
   min-height: 38px;
   padding: 7px 14px;
   font-size: 12px;
-  background: #f3dfae;
-  color: #3d2e11;
-  border-color: #ecd192;
+  background: #aef3eb;
+  color: #113d38;
+  border-color: #92ece1;
   gap: 9px;
 }
 .lp-button.lp-secondary {
@@ -113,7 +113,7 @@
 .lp-kicker > span {
   width: 6px;
   height: 6px;
-  background: #bc9653;
+  background: #53bcaf;
   border-radius: 50%;
 }
 .lp-hero {
@@ -148,12 +148,12 @@
   align-items: center;
 }
 .lp-hero-actions > .lp-button:first-child {
-  background: #eac879;
-  color: #332914;
-  border-color: #dfb85f;
+  background: #79eadc;
+  color: #14332f;
+  border-color: #5fdfd0;
 }
 .lp-hero-actions > .lp-button:first-child:hover {
-  background: #edcf90;
+  background: #90ede2;
 }
 .lp-reassurance {
   display: flex;
@@ -214,7 +214,7 @@
   border-radius: 12px;
   background: #161a20;
   box-shadow:
-    0 25px 55px #38312616,
+    0 25px 55px #26383616,
     0 6px 15px #0000000b;
   overflow: hidden;
   transform: perspective(1400px) rotateY(6deg) rotateX(2deg);
@@ -261,7 +261,7 @@
   font:
     bold 16px Arial,
     sans-serif;
-  color: #d5b161;
+  color: #61d5c7;
   letter-spacing: -0.5px;
   text-align: center;
   margin-bottom: 23px;
@@ -278,11 +278,11 @@
   white-space: nowrap;
 }
 .lp-preview-app > aside .on {
-  background: #3a3323;
-  color: #e2c378;
+  background: #233a37;
+  color: #78e2d5;
 }
 .lp-preview-app > aside > svg:last-child {
-  color: #a99263;
+  color: #63a9a1;
   align-self: center;
   margin-top: auto;
 }
@@ -312,11 +312,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #393326;
+  background: #263937;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  color: #d5b66c;
+  color: #6cd5c8;
   font-size: 11px;
 }
 .lp-preview-stats {
@@ -341,7 +341,7 @@
   white-space: nowrap;
 }
 .lp-preview-stats svg {
-  color: #d5b66c;
+  color: #6cd5c8;
   width: 12px;
 }
 .lp-preview-stats b {
@@ -383,8 +383,8 @@
 }
 .lp-preview-hearing > span {
   width: 29px;
-  background: #393326;
-  color: #dfbc70;
+  background: #263937;
+  color: #70dfd2;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -397,7 +397,7 @@
 }
 .lp-preview-hearing > span > small {
   font-size: 6px;
-  color: #dfbc70;
+  color: #70dfd2;
 }
 .lp-preview-hearing > div {
   display: flex;
@@ -425,7 +425,7 @@
   padding-top: 16px;
 }
 .lp-preview-file > svg {
-  color: #d4b36a;
+  color: #6ad4c7;
   margin-bottom: 8px;
 }
 .lp-preview-file > b {
@@ -462,7 +462,7 @@
   padding-top: 9px;
 }
 .lp-preview-file > div > svg {
-  color: #d0af62;
+  color: #62d0c3;
 }
 .lp-floating-note {
   position: absolute;
@@ -473,7 +473,7 @@
   gap: 11px;
   background: #fff;
   border: 1px solid var(--lp-line);
-  box-shadow: 0 8px 25px #3327160a;
+  box-shadow: 0 8px 25px #1633300a;
   border-radius: 8px;
   padding: 11px 16px;
   min-width: 215px;
@@ -486,7 +486,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #b68e43;
+  color: #43b6a8;
 }
 .lp-floating-note > span {
   display: flex;
@@ -533,7 +533,7 @@
   border: 0;
 }
 .lp-proof-strip svg {
-  color: #a18a5c;
+  color: #5ca199;
 }
 .lp-section {
   padding-block: 84px;
@@ -581,7 +581,7 @@
   height: 43px;
   border-radius: 9px;
   background: #f9f4e8;
-  color: #a78b50;
+  color: #50a79d;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -643,9 +643,9 @@
   font:
     12px Arial,
     sans-serif;
-  border: 1px solid #d9d0bc;
+  border: 1px solid #bcd9d6;
   background: #f9f6ef;
-  color: #a18346;
+  color: #46a196;
   border-radius: 50%;
   flex-shrink: 0;
   margin-top: 3px;
@@ -672,7 +672,7 @@
   margin-top: 23px;
 }
 .lp-pro-feature > svg {
-  color: #ac8b49;
+  color: #49aca0;
   margin-top: 4px;
 }
 .lp-pro-feature h3 {
@@ -688,7 +688,7 @@
 .lp-ai-preview {
   background: #fff;
   border: 1px solid var(--lp-line);
-  box-shadow: 0 16px 40px #30271609;
+  box-shadow: 0 16px 40px #16302d09;
   border-radius: 13px;
   padding: 23px;
   transform: rotate(-2deg);
@@ -715,8 +715,8 @@
     bold 8px Arial,
     sans-serif;
   border-radius: 4px;
-  background: #f6ecd4;
-  color: #a78540;
+  background: #d4f6f2;
+  color: #40a79b;
   padding: 5px 7px;
 }
 .lp-ai-case {
@@ -732,14 +732,14 @@
   color: #85817b;
 }
 .lp-ai-case svg {
-  color: #a78540;
+  color: #40a79b;
 }
 .lp-ai-user {
   font-size: 11px;
   line-height: 1.9;
   background: #f7f0e1;
   padding: 10px 12px;
-  border: 1px solid #efe3c9;
+  border: 1px solid #c9efea;
   border-radius: 7px;
   width: fit-content;
   margin: 23px 0 22px;
@@ -765,7 +765,7 @@
   margin: 9px 0;
 }
 .lp-ai-message p svg {
-  color: #b49b64;
+  color: #64b4aa;
 }
 .lp-ai-input {
   border: 1px solid #e4e3df;
@@ -778,7 +778,7 @@
   margin-top: 26px;
 }
 .lp-ai-input svg {
-  color: #af8b42;
+  color: #42afa2;
 }
 .lp-ai-preview > small {
   display: block;
@@ -877,16 +877,16 @@
   color: #686b70;
 }
 .lp-price-card li svg {
-  color: #a18955;
+  color: #55a198;
 }
 .lp-price-card > .lp-button {
   width: 100%;
   font-size: 12px;
 }
 .lp-price-pro {
-  border-color: #c7a45c;
+  border-color: #5cc7ba;
   background: #fffdf7;
-  box-shadow: 0 8px 30px #6e51200a;
+  box-shadow: 0 8px 30px #206e650a;
 }
 .lp-price-pro .lp-price {
   margin-top: 21px;
@@ -896,8 +896,8 @@
   top: -13px;
   left: 22px;
   font-size: 10px;
-  color: #5b4519;
-  background: #ebd6a6;
+  color: #195b53;
+  background: #a6ebe3;
   padding: 4px 11px;
   border-radius: 4px;
 }
@@ -917,7 +917,7 @@
   font-size: 11px;
   border-radius: 4px;
   padding: 5px 14px;
-  color: #858174;
+  color: #748583;
   min-height: 32px;
   display: flex;
   align-items: center;
@@ -925,30 +925,30 @@
 }
 .lp-billing button[aria-pressed="true"] {
   background: #fff;
-  border: 1px solid #e4d6b6;
+  border: 1px solid #b6e4de;
   box-shadow: 0 1px 4px #00000008;
-  color: #8e6a28;
+  color: #288e82;
 }
 .lp-billing button span {
   font-size: 8px;
-  color: #a38546;
+  color: #46a398;
 }
 .lp-price del {
   font:
     17px Arial,
     sans-serif;
-  color: #afa491;
+  color: #91afab;
   margin-right: auto;
 }
 .lp-price-pro > .lp-button {
-  background: #e8c779;
-  color: #3c2d10;
-  border-color: #dcb460;
+  background: #79e8db;
+  color: #103c37;
+  border-color: #60dccd;
 }
 .lp-price-pro > small {
   text-align: center;
   font-size: 9px;
-  color: #a29b89;
+  color: #89a29f;
   margin-top: 12px;
 }
 .lp-faq-section {
@@ -974,7 +974,7 @@
   display: none;
 }
 .lp-faqs summary > svg {
-  color: #a79a7e;
+  color: #7ea7a2;
   transition: 0.2s;
 }
 .lp-faqs details[open] summary > svg {
@@ -1000,7 +1000,7 @@
   margin-bottom: 58px;
 }
 .lp-final-cta .lp-kicker {
-  color: #c8aa6a;
+  color: #6ac8bd;
   font-size: 11px;
 }
 .lp-final-cta h2 {
@@ -1013,9 +1013,9 @@
   margin-top: 10px;
 }
 .lp-final-cta .lp-button {
-  background: #e8c779;
-  color: #3c2d10;
-  border-color: #dcb460;
+  background: #79e8db;
+  color: #103c37;
+  border-color: #60dccd;
   flex-shrink: 0;
   font-size: 12px;
 }
@@ -1042,7 +1042,7 @@
 }
 .landing :is(a, button):focus-visible,
 .landing summary:focus-visible {
-  outline: 2px solid #b88f3e;
+  outline: 2px solid #3eb8a9;
   outline-offset: 4px;
 }
 .landing button:disabled {

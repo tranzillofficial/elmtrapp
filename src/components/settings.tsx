@@ -1,8 +1,10 @@
 "use client";
+import { InstallApp } from "./install";
+import { TeamSettings } from "./team";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { pricing } from "@/lib/pricing";
+import { usePricing } from "@/lib/pricing";
 import {
   Building2,
   ShieldCheck,
@@ -24,6 +26,7 @@ export function Settings({
   theme: string;
   setTheme: (s: string) => void;
 }) {
+  const pricing = usePricing();
   const router = useRouter();
   const {
     profile,
@@ -42,7 +45,9 @@ export function Settings({
           <p>مساحة عمل على طريقتك.</p>
         </div>
       </div>
+      <TeamSettings />
       <div className="settings-grid">
+        <InstallApp />
         <section className="panel">
           <h2 className="inline-icon">
             <Building2 size={19} />
@@ -219,7 +224,7 @@ export function Auth() {
     <main className="auth-page">
       <section className="auth-brand">
         <div className="brand">
-          elmtrapp<span>مساحة مكتبك القانونية</span>
+          Elmtr App<span>مساحة مكتبك القانونية</span>
         </div>
         <h1>
           كل تفاصيل مكتبك.
@@ -229,7 +234,7 @@ export function Auth() {
         <p>قضاياك، عملاؤك وجلساتك. تجربة منظمة تمنحك وقتًا أكثر لما يهم.</p>
       </section>
       <section className="panel auth-card">
-        <span className="eyebrow">مرحبًا بك في elmtrapp</span>
+        <span className="eyebrow">مرحبًا بك في Elmtr App</span>
         <h2>{signup ? "إنشاء حساب مكتب" : "تسجيل الدخول"}</h2>
         <p className="hint">
           {signup ? "ابدأ تنظيم مكتبك بخطوة واحدة." : "أكمل من حيث توقفت."}

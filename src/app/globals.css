@@ -9,9 +9,9 @@
   --text: #25272f;
   --muted: #7e828e;
   --line: #e9ebef;
-  --gold: #b58a32;
-  --gold-light: #fcf4df;
-  --gold-button: linear-gradient(115deg, #f1d48a, #edc568);
+  --gold: #087f8c;
+  --gold-light: #e2f4f1;
+  --gold-button: linear-gradient(115deg, #8af1e5, #68eddd);
   --green: #27866e;
   --green-bg: #e5f4ed;
   --shadow: 0 3px 16px #18223603;
@@ -25,8 +25,8 @@
   --text: #edf0f5;
   --muted: #9a9fac;
   --line: #30353e;
-  --gold: #e3bd68;
-  --gold-light: #332d20;
+  --gold: #68e3d4;
+  --gold-light: #203331;
   --green: #7ad1af;
   --green-bg: #1b3c32;
   --shadow: none;
@@ -105,7 +105,7 @@ a:focus-visible {
 input:focus,
 textarea:focus,
 select:focus {
-  outline: 2px solid #c69a3d66;
+  outline: 2px solid #3dc6b666;
   outline-offset: 1px;
   border-color: var(--gold);
 }
@@ -148,14 +148,14 @@ hr {
   transition: 0.15s;
 }
 .button:hover {
-  border-color: #c69a3d88;
+  border-color: #3dc6b688;
   background: var(--gold-light);
 }
 .button.primary {
   background: var(--gold-button);
-  color: #30250e;
-  border-color: #e6c269;
-  box-shadow: 0 2px 6px #a77b2420;
+  color: #0e302c;
+  border-color: #69e6d7;
+  box-shadow: 0 2px 6px #24a79720;
 }
 .button.primary:hover {
   filter: brightness(1.035);
@@ -171,7 +171,7 @@ hr {
 .button.active-tool {
   color: var(--gold);
   background: var(--gold-light);
-  border-color: #c69a3d55;
+  border-color: #3dc6b655;
 }
 .icon-button {
   display: inline-flex;
@@ -302,7 +302,7 @@ hr {
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: #d6b66e;
+  background: #6ed6ca;
   margin-right: 3px;
 }
 .badge {
@@ -322,9 +322,9 @@ hr {
   border: 1px solid #4ca68326;
 }
 .badge.postponed {
-  color: #b18329;
-  background: #fbf0d5;
-  border: 1px solid #e9c56a36;
+  color: #29b1a1;
+  background: #d5fbf6;
+  border: 1px solid #6ae9da36;
 }
 .badge.closed {
   color: #727887;
@@ -338,7 +338,7 @@ hr {
   white-space: nowrap;
   font-size: 11px;
   background: var(--gold-button);
-  color: #47300c;
+  color: #0c4740;
   padding: 4px 9px;
   border-radius: 5px;
 }
@@ -412,7 +412,7 @@ hr {
 .segments button.selected {
   background: var(--gold-light);
   color: var(--gold);
-  box-shadow: inset 0 0 0 1px #c69a3d22;
+  box-shadow: inset 0 0 0 1px #3dc6b622;
 }
 .toolbar {
   display: flex;
@@ -559,7 +559,7 @@ hr {
   letter-spacing: 0.5px;
   color: var(--gold);
   background: var(--gold-light);
-  border: 1px solid #c69a3d33;
+  border: 1px solid #3dc6b633;
   padding: 3px 4px;
   border-radius: 3px;
 }
@@ -659,7 +659,7 @@ hr {
   align-items: center;
   justify-content: space-between;
   background: var(--gold-light);
-  border-bottom: 1px solid #c69a3d19;
+  border-bottom: 1px solid #3dc6b619;
   padding: 5px 34px;
   font-size: 10px;
   color: var(--gold);
@@ -757,7 +757,7 @@ hr {
   transition: 0.15s;
 }
 .stat-card:hover {
-  border-color: #c69a3d66;
+  border-color: #3dc6b666;
   transform: translateY(-2px);
 }
 .stat-top {
@@ -870,7 +870,7 @@ hr {
   color: var(--muted);
 }
 .quick-card:hover {
-  border-color: #c69a3d77;
+  border-color: #3dc6b677;
 }
 .case-grid,
 .client-grid {
@@ -886,7 +886,7 @@ hr {
   transition: 0.15s;
 }
 .case-card:hover {
-  border-color: #c69a3d77;
+  border-color: #3dc6b677;
   box-shadow: 0 5px 18px #00000006;
 }
 .case-card-top {
@@ -1047,7 +1047,7 @@ hr {
   text-align: left;
 }
 .assistant-promo {
-  border: 1px solid #c69a3d55;
+  border: 1px solid #3dc6b655;
   border-radius: 10px;
   padding: 20px;
   background: var(--gold-light);
@@ -1206,7 +1206,7 @@ hr {
 }
 .account-stats > div:last-child {
   background: var(--gold-light);
-  border-color: #c69a3d33;
+  border-color: #3dc6b633;
 }
 .payment-row {
   display: flex;
@@ -1291,11 +1291,11 @@ hr {
 }
 .calendar-grid button.today {
   color: var(--gold);
-  box-shadow: inset 0 0 0 1px #c69a3d66;
+  box-shadow: inset 0 0 0 1px #3dc6b666;
 }
 .calendar-grid button.chosen {
   background: var(--gold-button);
-  color: #33250d;
+  color: #0d332e;
 }
 .calendar-grid i {
   position: absolute;
@@ -1307,7 +1307,7 @@ hr {
   border-radius: 50%;
 }
 .calendar-grid button.chosen i {
-  background: #574013;
+  background: #13574f;
 }
 .calendar-legend {
   display: flex;
@@ -1429,14 +1429,14 @@ hr {
 }
 .scan-bounds {
   position: absolute;
-  border: 1px solid #e8c26a99;
+  border: 1px solid #6ae8d999;
   pointer-events: none;
 }
 .scan-bounds i {
   position: absolute;
   width: 23px;
   height: 23px;
-  border: 4px solid #edc96f;
+  border: 4px solid #6fedde;
 }
 .scan-bounds i:nth-child(1) {
   top: -2px;
@@ -1752,7 +1752,7 @@ hr {
 }
 .message.user > div {
   background: var(--gold-light);
-  border: 1px solid #c69a3d22;
+  border: 1px solid #3dc6b622;
 }
 .chat-input {
   display: flex;
@@ -1861,7 +1861,7 @@ hr {
   color: var(--gold);
   padding: 10px 13px;
   border-radius: 7px;
-  border: 1px solid #c69a3d33;
+  border: 1px solid #3dc6b633;
   font-size: 12px;
   margin: 12px 0;
   overflow-wrap: anywhere;
@@ -1916,7 +1916,7 @@ hr {
   padding: 8px 25px;
 }
 .subscription-card {
-  border-color: #c69a3d44;
+  border-color: #3dc6b644;
 }
 .subscription-card > strong {
   font-size: 14px;
@@ -2261,7 +2261,7 @@ hr {
     color: var(--gold);
   }
   .bottom-nav .active svg {
-    fill: #c69a3d15;
+    fill: #3dc6b615;
     stroke-width: 2;
   }
   .welcome,
@@ -2783,4 +2783,48 @@ hr {
 .drawer-dialog::backdrop {
   background: #11182766;
   backdrop-filter: blur(3px);
+}
+/* Elmtr App identity */
+.brand {
+  font-family: Arial, sans-serif;
+  font-weight: 800;
+  letter-spacing: -1.2px;
+  direction: ltr;
+}
+.brand::before,
+.lp-brand::before {
+  content: "E";
+  display: inline-grid;
+  place-items: center;
+  background: #087f8c;
+  color: white;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  margin-inline-end: 8px;
+  font-size: 20px;
+  letter-spacing: -2px;
+}
+.team-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--line);
+}
+.permission-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.permission-grid label {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+.permission-grid input {
+  width: auto;
 }

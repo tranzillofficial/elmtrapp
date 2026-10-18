@@ -150,9 +150,7 @@ test("demo assistant is honest about missing integration", async ({
   await page
     .getByRole("button", { name: "حلل ملخص القضية والمستندات" })
     .click();
-  await expect(page.locator(".chat-panel [role=alert]")).toContainText(
-    "لا يتم توليد تحليل وهمي",
-  );
+  await expect(page.locator(".messages")).toContainText("محاكاة توضيحية للبرو");
   const r = await request.post("/api/assistant", {
     data: { caseId: "demo-case-1", prompt: "test" },
   });
@@ -200,4 +198,77 @@ test("real login remains separate from demo", async ({ page }) => {
     .getByRole("button", { name: "استكشاف المعاينة التجريبية" })
     .click();
   await expect(page.locator(".demo-banner")).toBeVisible();
+});
+test("client files, PRO reference, PWA and demo team", async ({ page }) => {
+  await page.goto("/clients/demo-client-1");
+  await page.locator("input[type=file]").setInputFiles({
+    name: "بطاقة.pdf",
+    mimeType: "application/pdf",
+    buffer: Buffer.from("%PDF-1.4\n%%EOF"),
+  });
+  await expect(page.getByText("بطاقة.pdf", { exact: true })).toBeVisible();
+  await page.reload();
+  await expect(page.getByText("بطاقة.pdf", { exact: true })).toBeVisible();
+  await page.goto("/documents");
+  await expect(page.getByText("مستند عميل: محمد أحمد")).toBeVisible();
+  await page.goto("/library");
+  await expect(
+    page.getByText("القانون المدني — مقتطف", { exact: true }).first(),
+  ).toBeVisible();
+  await page.goto("/settings");
+  await expect(
+    page.getByRole("button", { name: "تثبيت التطبيق PWA" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "تثبيت التطبيق PWA" }).click();
+  await expect(
+    page.getByRole("status").filter({ hasText: "Safari" }),
+  ).toBeVisible();
+  await page
+    .getByRole("textbox", { name: "اسم الحساب", exact: true })
+    .fill("محامي الفريق");
+  await page
+    .getByRole("textbox", { name: "البريد الإلكتروني للحساب", exact: true })
+    .fill("demo@example.com");
+  await page.getByRole("button", { name: "حفظ الحساب الفرعي" }).click();
+  await expect(page.getByText("محامي الفريق", { exact: true })).toBeVisible();
+});
+test("PWA native prompt wiring and dynamic public prices", async ({ page }) => {
+  await page.route("**/rest/v1/site_prices*", (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      body: JSON.stringify({
+        id: true,
+        setup: 2900,
+        monthly: 275,
+        annual: 2100,
+        annualBeforeDiscount: 3300,
+        seatMonthly: 55,
+        seatAnnual: 660,
+      }),
+    }),
+  );
+  await page.goto("/");
+  await expect(page.locator(".lp-pricing-grid").first()).toContainText("٢٬٩٠٠");
+  await expect(page.locator(".lp-savings")).toContainText("١٬٢٠٠");
+  await page.goto("/settings");
+  await page.evaluate(() => {
+    const event = new Event("beforeinstallprompt");
+    Object.assign(event, {
+      prompt: async () => {
+        document.documentElement.dataset.installPrompt = "called";
+      },
+      userChoice: Promise.resolve({ outcome: "accepted" }),
+    });
+    window.dispatchEvent(event);
+  });
+  await page.getByRole("button", { name: "تثبيت التطبيق PWA" }).click();
+  await expect(page.locator("html")).toHaveAttribute(
+    "data-install-prompt",
+    "called",
+  );
+  await page.goto("/scanner?client=demo-client-1");
+  await expect(
+    page.getByRole("combobox", { name: "إرفاق بالعميل", exact: true }),
+  ).toHaveValue("demo-client-1");
 });

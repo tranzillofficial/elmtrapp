@@ -9,7 +9,7 @@ export function Documents() {
   const { data, openDocument, setError } = useStore();
   const [search, setSearch] = useState("");
   const docs = data.documents.filter((d) =>
-    `${d.name} ${data.cases.find((c) => c.id === d.case_id)?.title}`.includes(
+    `${d.name} ${data.cases.find((c) => c.id === d.case_id)?.title ?? data.clients.find((c) => c.id === d.client_id)?.name}`.includes(
       search,
     ),
   );
@@ -38,8 +38,14 @@ export function Documents() {
               <span>{d.mime_type === "application/pdf" ? "PDF" : "صورة"}</span>
             </div>
             <h2>{d.name}</h2>
-            <Link href={`/cases/${d.case_id}`}>
-              {data.cases.find((c) => c.id === d.case_id)?.title}
+            <Link
+              href={
+                d.client_id ? `/clients/${d.client_id}` : `/cases/${d.case_id}`
+              }
+            >
+              {d.client_id
+                ? `مستند عميل: ${data.clients.find((c) => c.id === d.client_id)?.name}`
+                : data.cases.find((c) => c.id === d.case_id)?.title}
             </Link>
             <p className="hint">
               {day(d.created_at)} · {(d.size / 1024).toFixed(0)} KB

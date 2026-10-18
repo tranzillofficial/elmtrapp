@@ -62,10 +62,20 @@ export async function POST(request: Request) {
       },
       { status: 503 },
     );
+  const context = await db.rpc("office_context");
+  if (
+    context.error ||
+    !context.data?.active ||
+    (context.data.member && !context.data.permissions.includes("assistant"))
+  )
+    return Response.json(
+      { error: "ليست لديك صلاحية المساعد" },
+      { status: 403 },
+    );
   const { data: entitlement, error: entitlementError } = await db
     .from("entitlements")
     .select("plan,expires_at")
-    .eq("owner_id", user.id)
+    .eq("owner_id", context.data.owner_id)
     .maybeSingle();
   if (entitlementError)
     return Response.json({ error: "تعذر التحقق من الاشتراك" }, { status: 503 });
@@ -82,7 +92,7 @@ export async function POST(request: Request) {
     .from("cases")
     .select("id,title,number,court,summary,opponent,status")
     .eq("id", input.caseId)
-    .eq("owner_id", user.id)
+    .eq("owner_id", context.data.owner_id)
     .maybeSingle();
   if (caseError || !caseData)
     return Response.json({ error: "القضية غير متاحة" }, { status: 404 });

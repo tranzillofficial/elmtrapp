@@ -1,4 +1,5 @@
 "use client";
+import { ClientFiles } from "./client-files";
 import { useState } from "react";
 import Link from "next/link";
 import {
@@ -202,6 +203,7 @@ export function ClientDetail({ id }: { id: string }) {
           )}
         </section>
         <aside>
+          <ClientFiles id={id} />
           <section className="panel">
             <SectionTitle
               title={`القضايا المرتبطة (${cases.length})`}

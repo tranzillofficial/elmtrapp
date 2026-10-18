@@ -14,11 +14,11 @@ const setup = await readFile(
 before(async () => {
   db = new PGlite();
   await db.exec(
-    `create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key);create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;`,
+    `create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;`,
   );
   await db.exec(setup);
   await db.exec(setup); // Entire installation must be safe to re-run.
-  await db.exec(`insert into auth.users values('${user1}'),('${user2}');`);
+  await db.exec(`insert into auth.users(id) values('${user1}'),('${user2}');`);
 });
 after(async () => db?.close());
 async function asUser(id, sql) {
@@ -92,7 +92,7 @@ test("ownership, finance, subscriptions and private storage are enforced", async
   );
   assert.equal(
     (await asUser(user1, "select * from public.laws")).rows.length,
-    1,
+    2,
   );
   assert.equal(
     (await asUser(user2, "select * from public.laws")).rows.length,
@@ -141,4 +141,97 @@ test("ownership, finance, subscriptions and private storage are enforced", async
     0,
   );
   await assert.rejects(asUser(user1, "select public.consume_ai_slot()"));
+});
+test("office seats, granular RLS, client documents and admin pricing", async () => {
+  await db.exec(
+    `update auth.users set email='staff@example.com',email_confirmed_at=now() where id='${user2}';insert into public.office_licenses(owner_id,seat_limit,expires_at) values('${user1}',1,now()+interval '1 month');`,
+  );
+  await assert.rejects(
+    asUser(
+      user2,
+      `insert into public.office_licenses(owner_id,seat_limit,expires_at) values('${user2}',10,now()+interval '1 year')`,
+    ),
+  );
+  await asUser(
+    user1,
+    `select public.manage_member('staff@example.com','محامي مساعد',array['clients','cases','documents'],true)`,
+  );
+  assert.equal(
+    (await asUser(user2, "select * from public.clients")).rows.length,
+    1,
+  );
+  assert.equal(
+    (await asUser(user2, "select * from public.payments")).rows.length,
+    0,
+  );
+  assert.equal(
+    (await asUser(user2, "select public.office_context() context")).rows[0]
+      .context.owner_id,
+    user1,
+  );
+  await assert.rejects(
+    asUser(
+      user2,
+      `insert into public.notes(owner_id,case_id,body) values('${user1}','${caseId}','غير مسموح')`,
+    ),
+  );
+  await asUser(
+    user2,
+    `update public.clients set name='غير مسموح' where id='${client}'`,
+  );
+  assert.equal(
+    (await asUser(user1, "select name from public.clients")).rows[0].name,
+    "عميل",
+  );
+  await asUser(
+    user1,
+    `select public.manage_member('staff@example.com','محامي مساعد',array['clients','cases','documents','write'],true)`,
+  );
+  await asUser(
+    user2,
+    `insert into public.documents(owner_id,client_id,name,path,mime_type,size) values('${user1}','${client}','بطاقة','${user1}/clients/${client}/id.pdf','application/pdf',100)`,
+  );
+  await asUser(
+    user2,
+    `insert into storage.objects(bucket_id,name) values('case-documents','${user1}/clients/${client}/id.pdf')`,
+  );
+  await assert.rejects(
+    asUser(
+      user2,
+      `insert into public.documents(owner_id,client_id,case_id,name,path,mime_type,size) values('${user1}','${client}','${caseId}','مخالف','${user1}/clients/${client}/both.pdf','application/pdf',100)`,
+    ),
+  );
+  await asUser(user2, "update public.site_prices set monthly=1");
+  assert.equal(
+    Number(
+      (await db.query("select monthly from public.site_prices")).rows[0]
+        .monthly,
+    ),
+    250,
+  );
+  await db.exec(`insert into private.site_admins values('${user1}')`);
+  await asUser(user1, "update public.site_prices set monthly=260");
+  assert.equal(
+    Number(
+      (await asUser(user2, "select monthly from public.site_prices")).rows[0]
+        .monthly,
+    ),
+    260,
+  );
+  await db.exec(
+    `update public.office_licenses set expires_at=now()-interval '1 second' where owner_id='${user1}'`,
+  );
+  assert.equal(
+    (await asUser(user2, "select * from public.clients")).rows.length,
+    0,
+  );
+  assert.equal(
+    (await asUser(user2, "select * from storage.objects")).rows.length,
+    0,
+  );
+  assert.equal(
+    (await asUser(user2, "select public.office_context() context")).rows[0]
+      .context.active,
+    false,
+  );
 });
