@@ -1,7 +1,8 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./landing.css";
 export const metadata: Metadata = {
-  title: "elmtrapp | مكتبك القانوني",
+  title: "elmtrapp | سيستم إدارة مكتب المحاماة",
   description:
     "إدارة القضايا والجلسات والعملاء ومستندات مكتب المحاماة في مكان واحد",
   manifest: "/manifest.webmanifest",

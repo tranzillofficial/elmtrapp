@@ -1,5 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { pricing } from "@/lib/pricing";
 import {
   Building2,
   ShieldCheck,
@@ -21,6 +24,7 @@ export function Settings({
   theme: string;
   setTheme: (s: string) => void;
 }) {
+  const router = useRouter();
   const {
     profile,
     saveProfile,
@@ -127,8 +131,10 @@ export function Settings({
               </p>
             )}
             <p className="hint">
-              تفعيل الاشتراك وإدارته يتمان من مسؤول التطبيق. لا يوجد دفع
-              إلكتروني أو تفعيل تلقائي للباقة في هذه النسخة.
+              البرو: {pricing.monthly} جنيه شهريًا أو {pricing.annual} جنيه
+              سنويًا بدل {pricing.annualBeforeDiscount}. تفعيل الاشتراك وإدارته
+              يتمان من مسؤول التطبيق. لا يوجد دفع إلكتروني أو تفعيل تلقائي
+              للباقة في هذه النسخة.
             </p>
           </section>
         </div>
@@ -160,7 +166,13 @@ export function Settings({
           )}
           {supabase &&
             (demo ? (
-              <button className="button primary" onClick={leaveDemo}>
+              <button
+                className="button primary"
+                onClick={() => {
+                  leaveDemo();
+                  router.push("/login");
+                }}
+              >
                 ربط حسابي / تسجيل الدخول
               </button>
             ) : (
@@ -192,9 +204,17 @@ export function Settings({
   );
 }
 export function Auth() {
-  const { enterDemo } = useStore();
+  const router = useRouter();
   const [signup, setSignup] = useState(false),
     [message, setMessage] = useState("");
+  useEffect(() => {
+    const frame = requestAnimationFrame(() =>
+      setSignup(
+        new URLSearchParams(window.location.search).get("mode") === "signup",
+      ),
+    );
+    return () => cancelAnimationFrame(frame);
+  }, []);
   return (
     <main className="auth-page">
       <section className="auth-brand">
@@ -282,7 +302,10 @@ export function Auth() {
             : "ليس لديك حساب؟ إنشاء حساب جديد"}
         </button>
         <hr />
-        <button className="button full" onClick={enterDemo}>
+        <Link href="/" className="text-button auth-switch">
+          العودة للموقع
+        </Link>
+        <button className="button full" onClick={() => router.push("/demo")}>
           استكشاف المعاينة التجريبية
         </button>
       </section>

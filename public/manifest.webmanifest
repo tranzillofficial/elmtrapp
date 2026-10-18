@@ -1,1 +1,1 @@
-{"name":"elmtrapp — مكتبك القانوني","short_name":"elmtrapp","lang":"ar","dir":"rtl","start_url":"/","display":"standalone","background_color":"#f7f8fa","theme_color":"#c2963c","icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}
+{"name":"elmtrapp — مكتبك القانوني","short_name":"elmtrapp","lang":"ar","dir":"rtl","start_url":"/dashboard","display":"standalone","background_color":"#f7f8fa","theme_color":"#c2963c","icons":[{"src":"/icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any"}]}

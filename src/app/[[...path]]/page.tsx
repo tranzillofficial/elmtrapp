@@ -1,4 +1,13 @@
 import { App } from "@/components/app";
-export default function Page() {
-  return <App />;
+import { Landing } from "@/components/landing";
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ path?: string[] }>;
+}) {
+  const { path } = await params;
+  if (!path?.length) return <Landing />;
+  return (
+    <App initialDemo={path[0] === "demo"} forceAuth={path[0] === "login"} />
+  );
 }

@@ -1,4 +1,8 @@
 import { test, expect } from "@playwright/test";
+test.beforeEach(async ({ page }) => {
+  await page.goto("/demo");
+  await expect(page.locator(".main-content")).toBeVisible();
+});
 for (const width of [320, 390, 768, 1440]) {
   test(`all screens fit at ${width}px in light and dark`, async ({ page }) => {
     const errors: string[] = [];
@@ -11,7 +15,7 @@ for (const width of [320, 390, 768, 1440]) {
     });
     await page.setViewportSize({ width, height: 900 });
     for (const path of [
-      "/",
+      "/dashboard",
       "/cases",
       "/cases/demo-case-1",
       "/hearings",
@@ -26,7 +30,7 @@ for (const width of [320, 390, 768, 1440]) {
       await page.goto(path);
       await expect(page.locator(".main-content")).toBeVisible();
       await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-      if (process.env.SCREENSHOT_DIR && path === "/")
+      if (process.env.SCREENSHOT_DIR && path === "/dashboard")
         await page.screenshot({
           path: `${process.env.SCREENSHOT_DIR}/overview-${width}.png`,
           fullPage: true,
@@ -153,4 +157,47 @@ test("demo assistant is honest about missing integration", async ({
     data: { caseId: "demo-case-1", prompt: "test" },
   });
   expect([401, 503]).toContain(r.status());
+});
+
+for (const width of [320, 390, 768, 1440])
+  test(`landing pricing and demo at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText(
+      "قضاياك تحت السيطرة",
+    );
+    expect(
+      await page.evaluate(
+        () => document.documentElement.scrollWidth <= innerWidth,
+      ),
+    ).toBe(true);
+    await expect(page.locator(".lp-price-card").first()).toContainText("٢٬٨٠٠");
+    await expect(page.locator(".lp-price-pro .lp-price")).toContainText(
+      "٢٬٠٠٠",
+    );
+    await expect(page.locator(".lp-price-pro del")).toContainText("٣٬٠٠٠");
+    await page.getByRole("button", { name: "شهري", exact: true }).click();
+    await expect(page.locator(".lp-price-pro .lp-price")).toContainText("٢٥٠");
+    await page.getByRole("button", { name: /سنوي/ }).click();
+    if (process.env.SCREENSHOT_DIR)
+      await page.screenshot({
+        path: `${process.env.SCREENSHOT_DIR}/landing-${width}.png`,
+        fullPage: true,
+      });
+    await page
+      .getByRole("link", { name: "جرّب حساب ديمو", exact: false })
+      .click();
+    await expect(page.locator(".main-content")).toBeVisible();
+    await expect(page.locator(".demo-banner")).toBeVisible();
+  });
+test("real login remains separate from demo", async ({ page }) => {
+  await page.goto("/login?mode=signup");
+  await expect(
+    page.getByRole("heading", { name: "إنشاء حساب مكتب" }),
+  ).toBeVisible();
+  await expect(page.locator(".demo-banner")).toHaveCount(0);
+  await page
+    .getByRole("button", { name: "استكشاف المعاينة التجريبية" })
+    .click();
+  await expect(page.locator(".demo-banner")).toBeVisible();
 });

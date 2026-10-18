@@ -188,6 +188,12 @@ create policy elmtrapp_documents_read on storage.objects for select to authentic
 create policy elmtrapp_documents_insert on storage.objects for insert to authenticated with check(bucket_id='case-documents' and (storage.foldername(name))[1]=(select auth.uid())::text and exists(select 1 from public.cases c where c.id::text=(storage.foldername(name))[2] and c.owner_id=(select auth.uid())));
 create policy elmtrapp_documents_update on storage.objects for update to authenticated using(bucket_id='case-documents' and (storage.foldername(name))[1]=(select auth.uid())::text) with check(bucket_id='case-documents' and (storage.foldername(name))[1]=(select auth.uid())::text and exists(select 1 from public.cases c where c.id::text=(storage.foldername(name))[2] and c.owner_id=(select auth.uid())));
 create policy elmtrapp_documents_delete on storage.objects for delete to authenticated using(bucket_id='case-documents' and (storage.foldername(name))[1]=(select auth.uid())::text);
+-- Supabase may install this event-trigger helper automatically. It is not an RPC.
+do $$ begin
+ if to_regprocedure('public.rls_auto_enable()') is not null then
+  execute 'revoke execute on function public.rls_auto_enable() from public, anon, authenticated';
+ end if;
+end $$;
 commit;
 
 -- OWNER-ONLY examples: replace the UUID; do not expose a service-role key in the app.

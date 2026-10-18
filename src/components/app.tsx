@@ -35,7 +35,7 @@ import { Library, Assistant } from "./premium";
 import { Settings, Auth } from "./settings";
 import { day, time } from "@/lib/types";
 const navigation = [
-  { href: "/", label: "نظرة عامة", short: "الرئيسية", Icon: Home },
+  { href: "/dashboard", label: "نظرة عامة", short: "الرئيسية", Icon: Home },
   { href: "/cases", label: "القضايا", short: "القضايا", Icon: FolderOpen },
   {
     href: "/hearings",
@@ -55,9 +55,15 @@ const navigation = [
   { href: "/assistant", label: "المساعد القانوني", Icon: Sparkles, pro: true },
   { href: "/settings", label: "الإعدادات", Icon: SettingsIcon },
 ];
-export function App() {
+export function App({
+  initialDemo = false,
+  forceAuth = false,
+}: {
+  initialDemo?: boolean;
+  forceAuth?: boolean;
+}) {
   return (
-    <Provider>
+    <Provider initialDemo={initialDemo} forceAuth={forceAuth}>
       <Shell />
     </Provider>
   );
@@ -93,10 +99,13 @@ function Shell() {
     localStorage.setItem("elmtrapp-theme", v);
   };
   const current =
-    navigation.find((n) => n.href !== "/" && path.startsWith(n.href)) ??
-    navigation[0];
+    navigation.find(
+      (n) => n.href !== "/dashboard" && path.startsWith(n.href),
+    ) ?? navigation[0];
   const selected = (href: string) =>
-    href === "/" ? path === "/" : path.startsWith(href);
+    href === "/dashboard"
+      ? ["/dashboard", "/demo"].includes(path)
+      : path.startsWith(href);
   if (loading && !user && !demo)
     return (
       <div className="loading-screen">
@@ -120,6 +129,9 @@ function Shell() {
   let content: React.ReactNode;
   switch (route[0]) {
     case undefined:
+    case "demo":
+    case "dashboard":
+    case "login":
       content = <Overview />;
       break;
     case "cases":
@@ -163,7 +175,11 @@ function Shell() {
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
   const nav = (
     <>
-      <Link href="/" className="brand" onClick={() => setDrawer(false)}>
+      <Link
+        href="/dashboard"
+        className="brand"
+        onClick={() => setDrawer(false)}
+      >
         elmtrapp<span>مكتبك القانوني في مكان واحد</span>
       </Link>
       <div className="sidebar-label">مساحة العمل</div>
@@ -280,7 +296,10 @@ function Shell() {
         ))}
         <button
           className={
-            route[0] && !["cases", "clients", "hearings"].includes(route[0])
+            route[0] &&
+            !["cases", "clients", "hearings", "dashboard", "demo"].includes(
+              route[0],
+            )
               ? "active"
               : ""
           }

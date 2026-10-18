@@ -53,7 +53,15 @@ const defaultProfile = {
   office_name: "مكتب المحاماة",
   phone: "",
 };
-export function Provider({ children }: { children: React.ReactNode }) {
+export function Provider({
+  children,
+  initialDemo = false,
+  forceAuth = false,
+}: {
+  children: React.ReactNode;
+  initialDemo?: boolean;
+  forceAuth?: boolean;
+}) {
   const [data, setDataState] = useState<Data>(EMPTY),
     [loading, setLoading] = useState(true),
     [demo, setDemo] = useState(false),
@@ -79,6 +87,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
       !!entitlement.expires_at &&
       new Date(entitlement.expires_at) > new Date());
   const enterDemo = useCallback(() => {
+    sessionStorage.setItem("elmtrapp-demo-mode", "1");
     demoRef.current = true;
     generation.current++;
     try {
@@ -180,9 +189,19 @@ export function Provider({ children }: { children: React.ReactNode }) {
   }, [demo, setData]);
   useEffect(() => {
     const frame = requestAnimationFrame(() => {
-      if (!supabase) {
+      if (
+        !forceAuth &&
+        (initialDemo ||
+          sessionStorage.getItem("elmtrapp-demo-mode") === "1" ||
+          !supabase)
+      ) {
         enterDemo();
         return;
+      }
+      if (forceAuth) {
+        sessionStorage.removeItem("elmtrapp-demo-mode");
+        demoRef.current = false;
+        setDemo(false);
       }
       void refresh();
     });
@@ -193,7 +212,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
       cancelAnimationFrame(frame);
       subscription?.data.subscription.unsubscribe();
     };
-  }, [refresh, enterDemo]);
+  }, [refresh, enterDemo, initialDemo, forceAuth]);
   useEffect(() => {
     if (demo && !loading) {
       try {
@@ -396,6 +415,7 @@ export function Provider({ children }: { children: React.ReactNode }) {
         setError,
         enterDemo,
         leaveDemo: () => {
+          sessionStorage.removeItem("elmtrapp-demo-mode");
           demoRef.current = false;
           generation.current++;
           setUser(null);
