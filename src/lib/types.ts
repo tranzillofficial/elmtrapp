@@ -3,7 +3,7 @@ export type Client = {
   owner_id?: string;
   name: string;
   phone: string;
-  email: string;
+  national_id?: string;
   address: string;
   opening_balance: number;
   notes: string;

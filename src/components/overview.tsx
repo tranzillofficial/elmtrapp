@@ -51,7 +51,7 @@ export function HearingRow({ item }: { item: Hearing }) {
   );
 }
 export function Overview() {
-  const { data, profile } = useStore();
+  const { data, profile, office } = useStore();
   const [now] = useState(() => Date.now()),
     [modal, setModal] = useState("");
   const upcoming = data.hearings
@@ -109,13 +109,42 @@ export function Overview() {
           </h1>
           <p>إليك ملخص أعمال مكتبك اليوم.</p>
         </div>
-        <button
-          className="button primary"
-          onClick={() => setModal(data.clients.length ? "case" : "client")}
-        >
-          <Plus size={18} />
-          {data.clients.length ? "قضية جديدة" : "إضافة أول عميل"}
-        </button>
+        <div className="welcome-actions">
+          {(!office.member ||
+            (office.permissions.includes("cases") &&
+              office.permissions.includes("write"))) && (
+            <button
+              className="button primary"
+              disabled={!data.clients.length}
+              title={!data.clients.length ? "أضف موكلًا أولًا" : undefined}
+              onClick={() => setModal("case")}
+            >
+              <Plus size={16} />
+              قضية جديدة
+            </button>
+          )}
+          {(!office.member ||
+            (office.permissions.includes("clients") &&
+              office.permissions.includes("write"))) && (
+            <button className="button" onClick={() => setModal("client")}>
+              <Users size={16} />
+              إضافة موكل
+            </button>
+          )}
+          {(!office.member ||
+            (office.permissions.includes("hearings") &&
+              office.permissions.includes("write"))) && (
+            <button
+              className="button"
+              disabled={!data.cases.length}
+              title={!data.cases.length ? "أضف قضية أولًا" : undefined}
+              onClick={() => setModal("hearing")}
+            >
+              <CalendarDays size={16} />
+              تسجيل جلسة
+            </button>
+          )}
+        </div>
       </div>
       <div className="stats-grid">
         {stats.map(({ title, value, Icon, href, caption }) => (

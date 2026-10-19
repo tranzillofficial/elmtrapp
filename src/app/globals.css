@@ -2991,3 +2991,55 @@ hr {
     flex-wrap: wrap;
   }
 }
+.welcome-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.client-national-id {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 760px) {
+  .welcome {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .welcome > .welcome-actions {
+    width: 100%;
+    max-width: none;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+  }
+  .welcome-actions .button {
+    justify-content: center;
+    min-width: 0;
+    min-height: 42px;
+    padding: 8px 5px;
+    font-size: 12px;
+    gap: 5px;
+    white-space: nowrap;
+  }
+  .welcome-actions .button svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+}
+@media (max-width: 760px) {
+  .welcome {
+    display: block;
+  }
+  .welcome > .welcome-actions {
+    margin-top: 14px;
+    flex: none;
+  }
+  .welcome-actions .button {
+    padding-inline: 4px;
+    gap: 4px;
+  }
+}

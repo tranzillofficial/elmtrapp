@@ -20,7 +20,9 @@ export function ClientEditor({
             {
               name: str(f, "name"),
               phone: str(f, "phone"),
-              email: str(f, "email"),
+              national_id: str(f, "national_id")
+                .replace(/[٠-٩]/g, (d) => String(d.charCodeAt(0) - 1632))
+                .replace(/[۰-۹]/g, (d) => String(d.charCodeAt(0) - 1776)),
               address: str(f, "address"),
               notes: str(f, "notes"),
               opening_balance: Number(f.get("opening_balance")),
@@ -47,12 +49,18 @@ export function ClientEditor({
               defaultValue={item?.phone}
             />
           </Field>
-          <Field label="البريد الإلكتروني">
+          <Field label="الرقم القومي (اختياري)">
             <input
-              name="email"
-              type="email"
+              name="national_id"
+              type="text"
+              inputMode="numeric"
               dir="ltr"
-              defaultValue={item?.email}
+              maxLength={14}
+              minLength={14}
+              pattern="[0-9٠-٩۰-۹]{14}"
+              title="أدخل 14 رقمًا أو اترك الحقل فارغًا"
+              defaultValue={item?.national_id ?? ""}
+              autoComplete="off"
             />
           </Field>
         </div>
@@ -66,7 +74,7 @@ export function ClientEditor({
             min="0"
             max="999999999"
             step="0.01"
-            defaultValue={item?.opening_balance ?? 0}
+            defaultValue={item?.opening_balance ?? ""}
           />
         </Field>
         <Field label="ملاحظات">
@@ -161,7 +169,7 @@ export function CaseEditor({
             min="0"
             max="999999999"
             step="0.01"
-            defaultValue={item?.fee ?? 0}
+            defaultValue={item?.fee ?? ""}
             required
           />
         </Field>

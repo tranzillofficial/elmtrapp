@@ -422,3 +422,9 @@ create or replace function public.admin_activation(target uuid,action text,pro_p
 revoke all on function private.request_activation(text,text),public.request_activation(text,text),private.admin_accounts(),public.admin_accounts(),private.admin_activation(uuid,text,text,uuid),public.admin_activation(uuid,text,text,uuid) from public,anon;
 grant execute on function private.request_activation(text,text),public.request_activation(text,text),private.admin_accounts(),public.admin_accounts(),private.admin_activation(uuid,text,text,uuid),public.admin_activation(uuid,text,text,uuid) to authenticated;
 commit;
+begin;
+alter table public.clients add column if not exists national_id text not null default '';
+do $$begin if not exists(select 1 from pg_constraint where conname='clients_national_id_format' and conrelid='public.clients'::regclass) then
+alter table public.clients add constraint clients_national_id_format check(national_id='' or national_id ~ '^[0-9]{14}$');
+end if;end $$;
+commit;

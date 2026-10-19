@@ -344,3 +344,46 @@ test("registration queues activation, admin approves base and monthly/yearly PRO
     ),
   );
 });
+test("national ID is optional, validates format and remains office scoped", async () => {
+  await asUser(
+    user1,
+    `update public.clients set national_id='29901011234567' where id='${client}'`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select national_id from public.clients where id='${client}'`,
+      )
+    ).rows[0].national_id,
+    "29901011234567",
+  );
+  await assert.rejects(
+    asUser(
+      user1,
+      `update public.clients set national_id='123' where id='${client}'`,
+    ),
+  );
+  assert.equal(
+    (
+      await asUser(
+        user2,
+        `select national_id from public.clients where id='${client}'`,
+      )
+    ).rows.length,
+    0,
+  );
+  await asUser(
+    user1,
+    `update public.clients set national_id='' where id='${client}'`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select national_id from public.clients where id='${client}'`,
+      )
+    ).rows[0].national_id,
+    "",
+  );
+});

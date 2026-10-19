@@ -5,7 +5,7 @@ import Link from "next/link";
 import {
   Plus,
   Phone,
-  Mail,
+  IdCard,
   MapPin,
   ChevronLeft,
   Pencil,
@@ -23,7 +23,7 @@ export function Clients() {
   const [search, setSearch] = useState(""),
     [add, setAdd] = useState(false);
   const rows = data.clients.filter((c) =>
-    `${c.name} ${c.phone} ${c.email}`.includes(search),
+    `${c.name} ${c.phone} ${c.national_id ?? ""}`.includes(search),
   );
   return (
     <>
@@ -40,7 +40,7 @@ export function Clients() {
       <SearchBox
         value={search}
         onChange={setSearch}
-        placeholder="ابحث باسم العميل أو رقم الهاتف"
+        placeholder="ابحث بالاسم أو الهاتف أو الرقم القومي"
       />
       <p className="result-count">{rows.length} عملاء</p>
       <div className="client-grid">
@@ -123,11 +123,13 @@ export function ClientDetail({ id }: { id: string }) {
                   {c.phone}
                 </a>
               )}
-              {c.email && (
-                <a dir="ltr" href={`mailto:${c.email}`}>
-                  <Mail size={14} />
-                  {c.email}
-                </a>
+              {c.national_id && (
+                <p className="client-national-id">
+                  <IdCard size={14} />
+                  <span>
+                    الرقم القومي: <bdi>{c.national_id}</bdi>
+                  </span>
+                </p>
               )}
               {c.address && (
                 <p>

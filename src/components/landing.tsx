@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowUpLeft,
   ArrowLeft,
@@ -80,7 +81,18 @@ export function Landing() {
       <header className="lp-header">
         <div className="lp-container lp-nav">
           <Link className="lp-brand" href="/">
-            Elmtr App<span>مكتبك القانوني</span>
+            <span className="lp-logo-frame">
+              <Image
+                src="/elmtr-logo.png"
+                alt=""
+                width={64}
+                height={64}
+                priority
+              />
+            </span>
+            <span className="lp-brand-wordmark">
+              Elmtr App<small>مكتبك القانوني</small>
+            </span>
           </Link>
           <nav aria-label="تنقل الصفحة">
             <a href="#features">المميزات</a>
@@ -496,7 +508,12 @@ export function Landing() {
       </main>
       <footer className="lp-footer lp-container">
         <Link className="lp-brand" href="/">
-          Elmtr App<span>مكتبك القانوني في مكان واحد</span>
+          <span className="lp-logo-frame">
+            <Image src="/elmtr-logo.png" alt="" width={64} height={64} />
+          </span>
+          <span className="lp-brand-wordmark">
+            Elmtr App<small>مكتبك القانوني في مكان واحد</small>
+          </span>
         </Link>
         <p>إدارة أوضح لمكتب المحاماة.</p>
         <div>

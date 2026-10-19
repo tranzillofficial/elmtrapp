@@ -272,3 +272,56 @@ test("PWA native prompt wiring and dynamic public prices", async ({ page }) => {
     page.getByRole("combobox", { name: "إرفاق بالعميل", exact: true }),
   ).toHaveValue("demo-client-1");
 });
+test("overview quick actions and optional national ID persist without email or default zero", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.getByRole("button", { name: "إضافة موكل", exact: true }).click();
+  await expect(
+    page.getByRole("dialog").getByLabel("البريد الإلكتروني", { exact: true }),
+  ).toHaveCount(0);
+  await expect(
+    page.getByLabel("رصيد مستحق سابق (ج.م)", { exact: true }),
+  ).toHaveValue("");
+  const national = page.getByLabel("الرقم القومي (اختياري)", { exact: true });
+  await expect(national).not.toHaveAttribute("required");
+  await page
+    .getByLabel("اسم العميل", { exact: true })
+    .fill("موكل الرقم القومي");
+  await page.getByLabel("رقم الهاتف", { exact: true }).fill("01000000000");
+  await national.fill("٢٩٩٠١٠١١٢٣٤٥٦٧");
+  if (process.env.SCREENSHOT_DIR)
+    await page.screenshot({
+      path: `${process.env.SCREENSHOT_DIR}/client-editor-390.png`,
+      fullPage: true,
+    });
+  await page.getByRole("button", { name: "حفظ", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.getByRole("button", { name: "قضية جديدة", exact: true }).click();
+  await expect(
+    page.getByLabel("أتعاب القضية (ج.م)", { exact: true }),
+  ).toHaveValue("");
+  await page.getByRole("button", { name: "إلغاء", exact: true }).click();
+  await page.getByRole("button", { name: "تسجيل جلسة", exact: true }).click();
+  await page
+    .getByRole("combobox", { name: "القضية", exact: true })
+    .selectOption("demo-case-1");
+  const date = await page.evaluate(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}T10:00`;
+  });
+  await page.getByLabel("التاريخ والوقت", { exact: true }).fill(date);
+  await page
+    .getByLabel("المحكمة / مكان الموعد", { exact: true })
+    .fill("محكمة الاختبار");
+  await page.getByLabel("غرض الجلسة", { exact: true }).fill("جلسة من الاختصار");
+  await page.getByRole("button", { name: "حفظ", exact: true }).click();
+  await expect(page.getByRole("dialog")).toBeHidden();
+  await page.goto("/clients");
+  await page.getByRole("link").filter({ hasText: "موكل الرقم القومي" }).click();
+  await expect(page.getByText("29901011234567", { exact: true })).toBeVisible();
+  await expect(page.locator('a[href^="mailto:"]')).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByText("29901011234567", { exact: true })).toBeVisible();
+});
