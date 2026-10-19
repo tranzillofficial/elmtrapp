@@ -1,4 +1,5 @@
 "use client";
+import { cairoDate } from "@/lib/power-alerts";
 import { useStore } from "./provider";
 import { Field, Form, Modal, str } from "./ui";
 import { Case, Client, Hearing, Payment, balance, money } from "@/lib/types";
@@ -106,6 +107,7 @@ export function CaseEditor({
               number: str(f, "number"),
               client_id: str(f, "client_id"),
               court: str(f, "court"),
+              district_court: str(f, "district_court"),
               opponent: str(f, "opponent"),
               fee: Number(f.get("fee")),
               summary: str(f, "summary"),
@@ -158,10 +160,17 @@ export function CaseEditor({
           <Field label="المحكمة">
             <input name="court" required defaultValue={item?.court} />
           </Field>
-          <Field label="الخصم">
-            <input name="opponent" defaultValue={item?.opponent} />
+          <Field label="المحكمة الجزئية">
+            <input
+              name="district_court"
+              maxLength={200}
+              defaultValue={item?.district_court ?? ""}
+            />
           </Field>
         </div>
+        <Field label="الخصم">
+          <input name="opponent" defaultValue={item?.opponent} />
+        </Field>
         <Field label="أتعاب القضية (ج.م)">
           <input
             name="fee"
@@ -306,6 +315,7 @@ export function PaymentEditor({
               client_id: clientId,
               amount: Number(f.get("amount")),
               method: str(f, "method"),
+              kind: str(f, "kind") as Payment["kind"],
               paid_at: new Date(str(f, "paid_at") + "T12:00:00").toISOString(),
               notes: str(f, "notes"),
             },
@@ -314,6 +324,12 @@ export function PaymentEditor({
           onClose();
         }}
       >
+        <Field label="نوع الدفعة">
+          <select name="kind" defaultValue={item?.kind ?? "payment"}>
+            <option value="payment">دفعة سداد</option>
+            <option value="advance">دفعة مقدمة</option>
+          </select>
+        </Field>
         <Field label="المبلغ (ج.م)">
           <input
             name="amount"
@@ -332,10 +348,9 @@ export function PaymentEditor({
               name="paid_at"
               type="date"
               required
-              defaultValue={(item?.paid_at ?? new Date().toISOString()).slice(
-                0,
-                10,
-              )}
+              defaultValue={
+                item?.paid_at ? cairoDate(new Date(item.paid_at)) : cairoDate()
+              }
             />
           </Field>
           <Field label="طريقة السداد">

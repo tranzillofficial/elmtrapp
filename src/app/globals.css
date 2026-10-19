@@ -3054,3 +3054,23 @@ hr {
   .powers-grid { grid-template-columns: minmax(0, 1fr); }
   .powers-grid .document-card h2 { font-size: 16px; }
 }
+.document-filters { display:flex; flex-wrap:wrap; gap:8px; margin-block:12px; }
+.document-filters .button { gap:8px; }
+.document-filters .button span { font-size:11px; opacity:.8; }
+.power-alerts { margin-block:16px; }
+.power-alerts .notification-row:last-child { border-bottom:0; }
+.account-report-button { margin-block:10px; }
+.statement-preview { margin-top:16px; color:var(--text); }
+.statement-preview h1 { font-size:20px; }
+.statement-preview h2 { font-size:17px; }
+.statement-summary { display:flex; flex-wrap:wrap; gap:14px; border-block:1px solid var(--line); padding-block:12px; }
+.statement-summary b { display:block; }
+.statement-table-wrap { overflow-x:auto; margin-block:14px; }
+.statement-preview table { width:100%; min-width:520px; border-collapse:collapse; font-size:12px; }
+.statement-preview td,.statement-preview th { padding:8px; border:1px solid var(--line); text-align:right; }
+.statement-preview td small { display:block; }
+.statement-footer { font-size:12px; }
+@media (max-width: 600px) {
+  .document-grid { grid-template-columns:minmax(0,1fr); }
+  .document-grid .document-preview { height:96px; }
+}

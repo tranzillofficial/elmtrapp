@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   LoaderCircle,
 } from "lucide-react";
+import { PowerAlerts } from "./power-alerts";
+import { expiringPowers } from "@/lib/power-alerts";
 import { AdminDashboard } from "./admin";
 import { PendingActivation } from "./activation";
 import { Provider, useStore } from "./provider";
@@ -86,7 +88,7 @@ function Shell() {
     refresh,
   } = useStore();
   const path = usePathname();
-  const [now] = useState(() => Date.now()),
+  const [now, setNow] = useState(() => Date.now()),
     [theme, setThemeState] = useState("light"),
     [drawer, setDrawer] = useState(false),
     [notifications, setNotifications] = useState(false);
@@ -97,6 +99,10 @@ function Shell() {
       document.documentElement.dataset.theme = saved;
     });
     return () => cancelAnimationFrame(frame);
+  }, []);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60000);
+    return () => clearInterval(timer);
   }, []);
   const setTheme = (v: string) => {
     setThemeState(v);
@@ -188,6 +194,10 @@ function Shell() {
     !office.permissions.includes(feature)
   )
     content = <Empty title="هذا القسم غير متاح ضمن صلاحيات حسابك" />;
+  const powerAlertCount =
+    !office.member || office.permissions.includes("documents")
+      ? expiringPowers(data.powers).length
+      : 0;
   const upcoming = data.hearings
     .filter(
       (h) =>
@@ -272,7 +282,9 @@ function Shell() {
               onClick={() => setNotifications(true)}
             >
               <Bell size={19} />
-              {upcoming.length > 0 && <i className="notification-dot" />}
+              {(upcoming.length > 0 || powerAlertCount > 0) && (
+                <i className="notification-dot" />
+              )}
             </IconButton>
             <Link href="/settings" className="profile-pill">
               <span className="avatar small">{profile.full_name[0]}</span>
@@ -349,10 +361,9 @@ function Shell() {
         </div>
       )}
       {notifications && (
-        <Modal
-          title="جلساتك خلال الأسبوع"
-          onClose={() => setNotifications(false)}
-        >
+        <Modal title="تنبيهات المكتب" onClose={() => setNotifications(false)}>
+          <PowerAlerts compact onNavigate={() => setNotifications(false)} />
+          <h3>جلساتك خلال الأسبوع</h3>
           {upcoming.map((h) => (
             <Link
               className="notification-row"

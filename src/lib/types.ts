@@ -16,6 +16,7 @@ export type Case = {
   title: string;
   number: string;
   court: string;
+  district_court?: string;
   status: "active" | "postponed" | "closed";
   summary: string;
   opponent: string;
@@ -41,6 +42,7 @@ export type Note = {
   created_at: string;
 };
 export type Payment = {
+  kind?: "payment" | "advance";
   id: string;
   owner_id?: string;
   client_id: string;
@@ -50,7 +52,14 @@ export type Payment = {
   notes: string;
   created_at: string;
 };
+export const documentCategories = {
+  other: "أخرى",
+  contract: "عقود",
+  memorandum: "مذكرات",
+  claim: "صحف دعاوى",
+} as const;
 export type Document = {
+  category?: keyof typeof documentCategories;
   id: string;
   owner_id?: string;
   case_id: string | null;
@@ -62,7 +71,13 @@ export type Document = {
   extracted_text: string;
   created_at: string;
 };
+export const powerTypes = {
+  general: "عام رسمي",
+  litigation: "خاص بالقضايا",
+} as const;
 export type Power = {
+  official_number?: string;
+  official_type?: "" | keyof typeof powerTypes;
   id: string;
   owner_id?: string;
   principal_name: string;

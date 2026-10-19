@@ -68,7 +68,14 @@ type Store = {
   ) => Promise<void>;
   readFile: (path: string) => Promise<Blob>;
   savePower: (
-    values: Pick<Power, "principal_name" | "phone" | "expires_on">,
+    values: Pick<
+      Power,
+      | "principal_name"
+      | "phone"
+      | "expires_on"
+      | "official_number"
+      | "official_type"
+    >,
     files: File[],
     id?: string,
   ) => Promise<void>;
@@ -474,7 +481,14 @@ export function Provider({
     return result.data;
   };
   const savePower = async (
-    values: Pick<Power, "principal_name" | "phone" | "expires_on">,
+    values: Pick<
+      Power,
+      | "principal_name"
+      | "phone"
+      | "expires_on"
+      | "official_number"
+      | "official_type"
+    >,
     files: File[],
     id?: string,
   ) => {

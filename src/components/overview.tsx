@@ -15,6 +15,7 @@ import {
   Sparkles,
   BookOpen,
 } from "lucide-react";
+import { PowerAlerts } from "./power-alerts";
 import { useStore } from "./provider";
 import { CaseEditor, HearingEditor, ClientEditor } from "./editors";
 import { SectionTitle, Empty, Badge } from "./ui";
@@ -146,6 +147,7 @@ export function Overview() {
           )}
         </div>
       </div>
+      <PowerAlerts />
       <div className="stats-grid">
         {stats.map(({ title, value, Icon, href, caption }) => (
           <Link className="stat-card" href={href} key={title}>

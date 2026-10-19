@@ -5,14 +5,19 @@ import { FileText, ScanLine, Download } from "lucide-react";
 import { SharePdf } from "./share-pdf";
 import { useStore } from "./provider";
 import { SearchBox, Empty } from "./ui";
-import { day } from "@/lib/types";
+import { day, documentCategories, type Document } from "@/lib/types";
 export function Documents() {
-  const { data, openDocument, setError } = useStore();
+  const { data, openDocument, setError, save, office } = useStore();
   const [search, setSearch] = useState("");
-  const docs = data.documents.filter((d) =>
-    `${d.name} ${data.cases.find((c) => c.id === d.case_id)?.title ?? data.clients.find((c) => c.id === d.client_id)?.name}`.includes(
-      search,
-    ),
+  const [category, setCategory] = useState("all"),
+    [busy, setBusy] = useState("");
+  const writable = !office.member || office.permissions.includes("write");
+  const docs = data.documents.filter(
+    (d) =>
+      (category === "all" || (d.category ?? "other") === category) &&
+      `${d.name} ${data.cases.find((c) => c.id === d.case_id)?.title ?? data.clients.find((c) => c.id === d.client_id)?.name}`.includes(
+        search,
+      ),
   );
   return (
     <>
@@ -25,6 +30,31 @@ export function Documents() {
           <ScanLine size={18} />
           مسح مستند
         </Link>
+      </div>
+      <div
+        className="document-filters"
+        role="group"
+        aria-label="تصنيف المستندات"
+      >
+        {[["all", "الكل"], ...Object.entries(documentCategories)].map(
+          ([v, l]) => (
+            <button
+              className={`button ${category === v ? "primary" : ""}`}
+              aria-pressed={category === v}
+              key={v}
+              onClick={() => setCategory(v)}
+            >
+              {l}
+              <span>
+                {
+                  data.documents.filter(
+                    (d) => v === "all" || (d.category ?? "other") === v,
+                  ).length
+                }
+              </span>
+            </button>
+          ),
+        )}
       </div>
       <SearchBox
         value={search}
@@ -39,6 +69,39 @@ export function Documents() {
               <span>{d.mime_type === "application/pdf" ? "PDF" : "صورة"}</span>
             </div>
             <h2>{d.name}</h2>
+            {writable ? (
+              <label className="field">
+                <span>نوع المستند</span>
+                <select
+                  aria-label={`نوع المستند: ${d.name}`}
+                  value={d.category ?? "other"}
+                  disabled={busy === d.id}
+                  onChange={async (e) => {
+                    const value = e.target.value as Document["category"];
+                    setBusy(d.id);
+                    try {
+                      await save("documents", { category: value }, d.id);
+                    } catch (e) {
+                      setError(
+                        e instanceof Error ? e.message : "تعذر تغيير التصنيف",
+                      );
+                    } finally {
+                      setBusy("");
+                    }
+                  }}
+                >
+                  {Object.entries(documentCategories).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : (
+              <p className="hint">
+                {documentCategories[d.category ?? "other"]}
+              </p>
+            )}
             <Link
               href={
                 d.client_id ? `/clients/${d.client_id}` : `/cases/${d.case_id}`
@@ -67,7 +130,7 @@ export function Documents() {
       {!docs.length && (
         <div className="panel">
           <Empty
-            title="لا توجد مستندات بعد"
+            title="لا توجد مستندات مطابقة"
             text="ارفع ملفاتك من صفحة القضية، أو امسح مستندًا بالكاميرا."
             action={
               <Link className="button" href="/scanner">

@@ -448,3 +448,60 @@ test("powers and identity images stay private and require documents permission",
     ),
   );
 });
+test("office details keep defaults and enforce document and power classifications", async () => {
+  const id = "88888888-8888-4888-8888-888888888888";
+  await asUser(
+    user1,
+    `update public.powers set official_number='123/2026',official_type='litigation' where id='${id}'`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select official_type from public.powers where id='${id}'`,
+      )
+    ).rows[0].official_type,
+    "litigation",
+  );
+  await assert.rejects(
+    asUser(
+      user1,
+      `update public.powers set official_type='unrecognized' where id='${id}'`,
+    ),
+  );
+  await asUser(
+    user1,
+    `update public.cases set district_court='جزئي الاختبار' where id='${caseId}'`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select district_court from public.cases where id='${caseId}'`,
+      )
+    ).rows[0].district_court,
+    "جزئي الاختبار",
+  );
+  await assert.rejects(
+    asUser(
+      user1,
+      `insert into public.documents(owner_id,case_id,name,path,mime_type,size,category) values('${user1}','${caseId}','test','${user1}/${caseId}/test.pdf','application/pdf',1,'invalid')`,
+    ),
+  );
+  await asUser(
+    user1,
+    `insert into public.documents(owner_id,case_id,name,path,mime_type,size,category) values('${user1}','${caseId}','عقد','${user1}/${caseId}/contract.pdf','application/pdf',1,'contract')`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user2,
+        `select * from public.documents where category='contract'`,
+      )
+    ).rows.length,
+    0,
+  );
+  await assert.rejects(
+    asUser(user1, `update public.payments set kind='invalid'`),
+  );
+});

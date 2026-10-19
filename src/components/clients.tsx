@@ -1,4 +1,5 @@
 "use client";
+import { AccountReport } from "./account-report";
 import { ClientFiles } from "./client-files";
 import { useState } from "react";
 import Link from "next/link";
@@ -81,7 +82,8 @@ export function Clients() {
   );
 }
 export function ClientDetail({ id }: { id: string }) {
-  const { data, remove, setError } = useStore();
+  const { data, remove, setError, office } = useStore();
+  const [report, setReport] = useState(false);
   const [edit, setEdit] = useState(false),
     [payment, setPayment] = useState<Payment | "new" | null>(null),
     [newCase, setNewCase] = useState(false);
@@ -160,6 +162,17 @@ export function ClientDetail({ id }: { id: string }) {
             <Wallet size={17} />
             تسجيل دفعة
           </button>
+          {(!office.member ||
+            ["clients", "cases", "payments"].every((p) =>
+              office.permissions.includes(p),
+            )) && (
+            <button
+              className="button full account-report-button"
+              onClick={() => setReport(true)}
+            >
+              تصدير أو طباعة كشف حساب PDF
+            </button>
+          )}
           <SectionTitle title="سجل المدفوعات" />
           {payments.length ? (
             <div className="payment-list">
@@ -169,7 +182,10 @@ export function ClientDetail({ id }: { id: string }) {
                     <Wallet size={17} />
                   </div>
                   <div className="row-main">
-                    <strong>{p.method}</strong>
+                    <strong>
+                      {p.kind === "advance" ? "دفعة مقدمة" : "دفعة سداد"} ·{" "}
+                      {p.method}
+                    </strong>
                     <span>{day(p.paid_at)}</span>
                     {p.notes && <small>{p.notes}</small>}
                   </div>
@@ -242,6 +258,7 @@ export function ClientDetail({ id }: { id: string }) {
           </p>
         </aside>
       </div>
+      {report && <AccountReport id={id} onClose={() => setReport(false)} />}
       {edit && <ClientEditor item={c} onClose={() => setEdit(false)} />}{" "}
       {payment && (
         <PaymentEditor

@@ -102,6 +102,7 @@ export function Cases() {
             <p>
               <MapPin size={15} />
               {c.court}
+              {c.district_court ? ` · ${c.district_court}` : ""}
             </p>
             <div className="case-card-bottom">
               <span>
@@ -217,6 +218,9 @@ export function CaseDetail({ id }: { id: string }) {
               <span>
                 <small>المحكمة</small>
                 <b>{c.court}</b>
+                {c.district_court && (
+                  <small>المحكمة الجزئية: {c.district_court}</small>
+                )}
               </span>
             </div>
           </div>

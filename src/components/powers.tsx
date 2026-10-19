@@ -3,8 +3,9 @@ import { useEffect, useState } from "react";
 import { Plus, FileText } from "lucide-react";
 import { useStore } from "./provider";
 import { Modal, Form, Field, SearchBox, Empty, str } from "./ui";
+import { powerDaysLeft } from "@/lib/power-alerts";
 import { SharePdf } from "./share-pdf";
-import { day, type Power } from "@/lib/types";
+import { day, powerTypes, type Power } from "@/lib/types";
 export function Powers() {
   const { data, office, savePower, readFile } = useStore();
   const [search, setSearch] = useState(""),
@@ -22,7 +23,11 @@ export function Powers() {
   );
   const writable = !office.member || office.permissions.includes("write");
   const records = data.powers
-    .filter((p) => `${p.principal_name} ${p.phone}`.includes(search))
+    .filter((p) =>
+      `${p.principal_name} ${p.phone} ${p.official_number ?? ""}`.includes(
+        search,
+      ),
+    )
     .toSorted((a, b) => a.expires_on.localeCompare(b.expires_on));
   return (
     <>
@@ -41,7 +46,7 @@ export function Powers() {
       <SearchBox
         value={search}
         onChange={setSearch}
-        placeholder="ابحث باسم الموكل أو الهاتف"
+        placeholder="ابحث باسم الموكل أو الهاتف أو رقم التوكيل"
       />
       <div className="document-grid powers-grid">
         {records.map((p) => {
@@ -55,6 +60,15 @@ export function Powers() {
                 </span>
               </div>
               <h2>{p.principal_name}</h2>
+              <p className="hint">
+                {p.official_number
+                  ? `رقم التوكيل: ${p.official_number}`
+                  : "لم يُسجل رقم التوكيل"}{" "}
+                ·{" "}
+                {p.official_type
+                  ? powerTypes[p.official_type]
+                  : "النوع غير محدد"}
+              </p>
               <a dir="ltr" href={`tel:${p.phone}`}>
                 {p.phone}
               </a>
@@ -140,6 +154,11 @@ export function Powers() {
                 {
                   principal_name: str(f, "principal_name"),
                   phone: str(f, "phone"),
+                  official_number: str(f, "official_number"),
+                  official_type: str(
+                    f,
+                    "official_type",
+                  ) as Power["official_type"],
                   expires_on: str(f, "expires_on"),
                 },
                 editor === "new"
@@ -158,6 +177,32 @@ export function Powers() {
                 defaultValue={editor === "new" ? "" : editor.principal_name}
               />
             </Field>
+            <div className="form-grid">
+              <Field label="رقم التوكيل الرسمي">
+                <input
+                  name="official_number"
+                  maxLength={100}
+                  defaultValue={
+                    editor === "new" ? "" : (editor.official_number ?? "")
+                  }
+                />
+              </Field>
+              <Field label="نوع التوكيل">
+                <select
+                  name="official_type"
+                  defaultValue={
+                    editor === "new" ? "general" : (editor.official_type ?? "")
+                  }
+                >
+                  <option value="">غير محدد</option>
+                  {Object.entries(powerTypes).map(([v, l]) => (
+                    <option key={v} value={v}>
+                      {l}
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            </div>
             <div className="form-grid">
               <Field label="رقم الهاتف">
                 <input
@@ -207,11 +252,7 @@ export function Powers() {
   );
 }
 function expiry(date: string) {
-  const now = new Date();
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const days = Math.round(
-    (new Date(`${date}T00:00:00`).getTime() - today.getTime()) / 86400000,
-  );
+  const days = powerDaysLeft(date);
   return days < 0
     ? { label: "منتهي", className: "closed" }
     : days <= 30
