@@ -62,6 +62,17 @@ export type Document = {
   extracted_text: string;
   created_at: string;
 };
+export type Power = {
+  id: string;
+  owner_id?: string;
+  principal_name: string;
+  phone: string;
+  expires_on: string;
+  poa_path: string;
+  front_path: string;
+  back_path: string;
+  created_at: string;
+};
 export type Law = {
   id: string;
   title: string;
@@ -91,6 +102,7 @@ export type Entitlement = {
 };
 export type Profile = { full_name: string; office_name: string; phone: string };
 export type Data = {
+  powers: Power[];
   clients: Client[];
   cases: Case[];
   hearings: Hearing[];
@@ -104,6 +116,7 @@ export type Data = {
 export type Table = keyof Data;
 export type Row<T extends Table> = Data[T][number];
 export const EMPTY: Data = {
+  powers: [],
   clients: [],
   cases: [],
   hearings: [],

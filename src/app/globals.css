@@ -3043,3 +3043,14 @@ hr {
     gap: 4px;
   }
 }
+
+.power-files { display: flex; flex-wrap: wrap; gap: 8px 12px; margin-block: 10px; }
+.power-preview { display: block; max-width: 100%; max-height: 65vh; object-fit: contain; margin-inline: auto; }
+.check-row { display:flex; align-items:center; gap:8px; margin-block:12px; }
+.check-row input { width:18px; height:18px; flex-shrink:0; }
+.document-card .text-button { margin-block-start:8px; }
+.team-row { flex-wrap:wrap; }
+@media (max-width: 600px) {
+  .powers-grid { grid-template-columns: minmax(0, 1fr); }
+  .powers-grid .document-card h2 { font-size: 16px; }
+}

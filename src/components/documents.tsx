@@ -2,6 +2,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { FileText, ScanLine, Download } from "lucide-react";
+import { SharePdf } from "./share-pdf";
 import { useStore } from "./provider";
 import { SearchBox, Empty } from "./ui";
 import { day } from "@/lib/types";
@@ -59,6 +60,7 @@ export function Documents() {
               <Download size={16} />
               فتح المستند
             </button>
+            <SharePdf paths={[d.path]} name={d.name} />
           </article>
         ))}
       </div>

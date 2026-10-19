@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useState } from "react";
+import { SharePdf } from "./share-pdf";
 import { useStore } from "./provider";
 export function ClientFiles({ id }: { id: string }) {
   const { data, upload, openDocument, setError } = useStore();
@@ -41,6 +42,11 @@ export function ClientFiles({ id }: { id: string }) {
         .map((d) => (
           <div className="team-row" key={d.id}>
             <span className="row-main">{d.name}</span>
+            <SharePdf
+              paths={[d.path]}
+              name={d.name}
+              phone={data.clients.find((c) => c.id === id)?.phone}
+            />
             <button
               className="text-button"
               onClick={() =>

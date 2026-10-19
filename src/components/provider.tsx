@@ -11,6 +11,7 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/lib/supabase";
 import { demoData } from "@/lib/demo";
 import {
+  Power,
   Data,
   EMPTY,
   Table,
@@ -65,6 +66,12 @@ type Store = {
     text?: string,
     target?: "case" | "client",
   ) => Promise<void>;
+  readFile: (path: string) => Promise<Blob>;
+  savePower: (
+    values: Pick<Power, "principal_name" | "phone" | "expires_on">,
+    files: File[],
+    id?: string,
+  ) => Promise<void>;
   openDocument: (id: string) => Promise<void>;
   saveProfile: (p: Profile) => Promise<void>;
   resetDemo: () => void;
@@ -117,7 +124,12 @@ export function Provider({
       const v = localStorage.getItem(KEY);
       setData(
         v
-          ? { ...JSON.parse(v), laws: sampleLaws, articles: sampleArticles }
+          ? {
+              ...EMPTY,
+              ...JSON.parse(v),
+              laws: sampleLaws,
+              articles: sampleArticles,
+            }
           : demoData(),
       );
     } catch {
@@ -297,7 +309,13 @@ export function Provider({
       office.member &&
       (!office.active ||
         !office.permissions.includes("write") ||
-        !office.permissions.includes(table === "bookmarks" ? "library" : table))
+        !office.permissions.includes(
+          table === "bookmarks"
+            ? "library"
+            : table === "powers"
+              ? "documents"
+              : table,
+        ))
     )
       throw new Error("ليست لديك صلاحية تعديل هذا القسم");
     if (["laws", "articles"].includes(table))
@@ -375,7 +393,13 @@ export function Provider({
       office.member &&
       (!office.active ||
         !office.permissions.includes("write") ||
-        !office.permissions.includes(table === "bookmarks" ? "library" : table))
+        !office.permissions.includes(
+          table === "bookmarks"
+            ? "library"
+            : table === "powers"
+              ? "documents"
+              : table,
+        ))
     )
       throw new Error("ليست لديك صلاحية تعديل هذا القسم");
     const data = dataRef.current;
@@ -434,6 +458,90 @@ export function Provider({
     } catch (e) {
       if (demo) await removeLocalFile(path);
       else await supabase!.storage.from("case-documents").remove([path]);
+      throw e;
+    }
+  };
+  const readFile = async (path: string): Promise<Blob> => {
+    if (demo) {
+      const blob = await localFile(path);
+      if (!blob) throw new Error("الملف غير متاح في هذا المتصفح؛ أعد رفعه");
+      return blob;
+    }
+    const result = await supabase!.storage
+      .from("case-documents")
+      .download(path);
+    if (result.error) throw new Error(result.error.message);
+    return result.data;
+  };
+  const savePower = async (
+    values: Pick<Power, "principal_name" | "phone" | "expires_on">,
+    files: File[],
+    id?: string,
+  ) => {
+    if (
+      office.member &&
+      (!office.active ||
+        !office.permissions.includes("documents") ||
+        !office.permissions.includes("write"))
+    )
+      throw new Error("ليست لديك صلاحية تعديل التوكيلات");
+    if (id) {
+      await save("powers", values, id);
+      return;
+    }
+    if (
+      files.length !== 3 ||
+      files.some(
+        (f) =>
+          !["image/jpeg", "image/png", "image/webp"].includes(f.type) ||
+          !f.size ||
+          f.size > 20 * 1024 * 1024,
+      )
+    )
+      throw new Error(
+        "ارفع صورة التوكيل ووجهي البطاقة بصيغة JPG أو PNG أو WebP، حتى 20 ميجابايت للصورة",
+      );
+    for (const file of files) {
+      let bitmap: ImageBitmap;
+      try {
+        bitmap = await createImageBitmap(file);
+      } catch {
+        throw new Error(
+          "إحدى الصور غير صالحة؛ اختر صورة واضحة بصيغة JPG أو PNG أو WebP",
+        );
+      }
+      const tooLarge = bitmap.width * bitmap.height > 60000000;
+      bitmap.close();
+      if (tooLarge) throw new Error("إحدى الصور كبيرة جدًا؛ اختر صورة أصغر");
+    }
+    const powerId = crypto.randomUUID();
+    const owner = demo ? "demo" : office.owner_id || user!.id;
+    const paths = files.map(
+      (f, i) => `${owner}/powers/${powerId}/${i}.${f.type.split("/")[1]}`,
+    );
+    const uploaded: string[] = [];
+    try {
+      for (let i = 0; i < files.length; i++) {
+        if (demo) await localFile(paths[i], files[i]);
+        else {
+          const r = await supabase!.storage
+            .from("case-documents")
+            .upload(paths[i], files[i]);
+          if (r.error) throw new Error(r.error.message);
+        }
+        uploaded.push(paths[i]);
+      }
+      await save("powers", {
+        ...values,
+        id: powerId,
+        poa_path: paths[0],
+        front_path: paths[1],
+        back_path: paths[2],
+      });
+    } catch (e) {
+      if (demo) await Promise.all(uploaded.map(removeLocalFile));
+      else if (uploaded.length)
+        await supabase!.storage.from("case-documents").remove(uploaded);
       throw e;
     }
   };
@@ -504,6 +612,8 @@ export function Provider({
         save,
         remove,
         upload,
+        readFile,
+        savePower,
         openDocument,
         saveProfile,
         resetDemo: () => {

@@ -387,3 +387,64 @@ test("national ID is optional, validates format and remains office scoped", asyn
     "",
   );
 });
+test("powers and identity images stay private and require documents permission", async () => {
+  const id = "88888888-8888-4888-8888-888888888888";
+  const base = `${user1}/powers/${id}`;
+  await asUser(
+    user1,
+    `insert into storage.objects(bucket_id,name) values('case-documents','${base}/0.png');`,
+  );
+  await asUser(
+    user1,
+    `insert into public.powers(id,owner_id,principal_name,phone,expires_on,poa_path,front_path,back_path) values('${id}','${user1}','موكل توكيل','01012345678','2027-10-19','${base}/0.png','${base}/1.png','${base}/2.png')`,
+  );
+  assert.equal(
+    (await asUser(user1, "select * from public.powers")).rows.length,
+    1,
+  );
+  assert.equal(
+    (await asUser(user2, "select * from public.powers")).rows.length,
+    0,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user2,
+        `select * from storage.objects where name='${base}/0.png'`,
+      )
+    ).rows.length,
+    0,
+  );
+  await assert.rejects(
+    asUser(
+      user2,
+      `insert into public.powers(owner_id,principal_name,phone,expires_on,poa_path,front_path,back_path) select owner_id,principal_name,phone,expires_on,poa_path,front_path,back_path from public.powers where id='${id}' returning id`,
+    ).then((r) => {
+      if (!r.rows.length) throw new Error("hidden");
+    }),
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select private.document_access('${base}/0.png',false) ok`,
+      )
+    ).rows[0].ok,
+    true,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select private.document_access('${base}/../0.png',true) ok`,
+      )
+    ).rows[0].ok,
+    false,
+  );
+  await assert.rejects(
+    asUser(
+      user1,
+      `update public.powers set front_path='${user2}/powers/${id}/1.png' where id='${id}'`,
+    ),
+  );
+});

@@ -31,6 +31,7 @@ import { Overview } from "./overview";
 import { Cases, CaseDetail } from "./cases";
 import { Clients, ClientDetail } from "./clients";
 import { Hearings } from "./hearings";
+import { Powers } from "./powers";
 import { Documents } from "./documents";
 import { Scanner } from "./scanner";
 import { Library, Assistant } from "./premium";
@@ -52,6 +53,7 @@ const navigation = [
     Icon: Users,
   },
   { href: "/documents", label: "المستندات", Icon: FileText },
+  { href: "/powers", label: "التوكيلات", Icon: FileText },
   { href: "/scanner", label: "مسح مستند", Icon: ScanLine },
   { href: "/library", label: "مرجع القانون المصري", Icon: BookOpen, pro: true },
   { href: "/assistant", label: "المساعد القانوني", Icon: Sparkles, pro: true },
@@ -153,6 +155,9 @@ function Shell() {
     case "documents":
       content = <Documents />;
       break;
+    case "powers":
+      content = <Powers />;
+      break;
     case "scanner":
       content = <Scanner />;
       break;
@@ -173,7 +178,9 @@ function Shell() {
         />
       );
   }
-  const feature = route[0] === "scanner" ? "documents" : route[0];
+  const feature = ["scanner", "powers"].includes(route[0])
+    ? "documents"
+    : route[0];
   if (
     office.member &&
     feature &&
@@ -205,7 +212,9 @@ function Shell() {
               !office.member ||
               ["/dashboard", "/settings"].includes(n.href) ||
               office.permissions.includes(
-                n.href === "/scanner" ? "documents" : n.href.slice(1),
+                ["/scanner", "/powers"].includes(n.href)
+                  ? "documents"
+                  : n.href.slice(1),
               ),
           )
           .map(({ href, label, Icon, pro }) => (

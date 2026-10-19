@@ -16,6 +16,7 @@ import {
   StickyNote,
   Download,
 } from "lucide-react";
+import { SharePdf } from "./share-pdf";
 import { useStore } from "./provider";
 import { CaseEditor, HearingEditor } from "./editors";
 import {
@@ -394,22 +395,26 @@ export function CaseDetail({ id }: { id: string }) {
               />
               <div className="document-list">
                 {docs.map((d) => (
-                  <button
-                    className="document-row"
-                    key={d.id}
-                    onClick={() =>
-                      void openDocument(d.id).catch((e) => setError(e.message))
-                    }
-                  >
-                    <FileText size={24} />
-                    <span>
-                      <strong>{d.name}</strong>
-                      <small>
-                        {(d.size / 1024).toFixed(0)} KB · {day(d.created_at)}
-                      </small>
-                    </span>
-                    <ChevronLeft size={16} />
-                  </button>
+                  <div key={d.id}>
+                    <button
+                      className="document-row"
+                      onClick={() =>
+                        void openDocument(d.id).catch((e) =>
+                          setError(e.message),
+                        )
+                      }
+                    >
+                      <FileText size={24} />
+                      <span>
+                        <strong>{d.name}</strong>
+                        <small>
+                          {(d.size / 1024).toFixed(0)} KB · {day(d.created_at)}
+                        </small>
+                      </span>
+                      <ChevronLeft size={16} />
+                    </button>
+                    <SharePdf paths={[d.path]} name={d.name} />
+                  </div>
                 ))}
               </div>
               {!docs.length && (
