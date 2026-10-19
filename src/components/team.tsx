@@ -201,11 +201,10 @@ export function TeamSettings() {
           </div>
         ))}
       </section>
-      {office.admin && <AdminSettings />}
     </>
   );
 }
-function AdminSettings() {
+export function AdminSettings() {
   const price = usePricing(),
     { setNotice } = useStore();
   const [offices, setOffices] = useState<
@@ -318,43 +317,6 @@ function AdminSettings() {
             step="0.01"
             defaultValue="50"
           />
-        </Field>
-      </Form>
-      <h3>تفعيل اشتراك البرو</h3>
-      <Form
-        label="حفظ اشتراك البرو"
-        onSubmit={async (f) => {
-          const plan = str(f, "plan");
-          const r = await supabase!.from("entitlements").upsert({
-            owner_id: str(f, "owner"),
-            plan,
-            expires_at:
-              plan === "basic"
-                ? null
-                : new Date(str(f, "expiry") + "T23:59:59").toISOString(),
-          });
-          if (r.error) throw r.error;
-          setNotice("تم تحديث الاشتراك");
-        }}
-      >
-        <Field label="المكتب">
-          <select required name="owner">
-            {offices.map((o) => (
-              <option key={o.id} value={o.id}>
-                {o.office_name} — {o.full_name}
-              </option>
-            ))}
-          </select>
-        </Field>
-        <Field label="الباقة">
-          <select name="plan">
-            <option value="basic">أساسية</option>
-            <option value="monthly">برو شهري</option>
-            <option value="annual">برو سنوي</option>
-          </select>
-        </Field>
-        <Field label="نهاية الاشتراك">
-          <input name="expiry" type="date" required />
         </Field>
       </Form>
     </section>

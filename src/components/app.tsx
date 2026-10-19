@@ -23,6 +23,8 @@ import {
   CheckCircle2,
   LoaderCircle,
 } from "lucide-react";
+import { AdminDashboard } from "./admin";
+import { PendingActivation } from "./activation";
 import { Provider, useStore } from "./provider";
 import { IconButton, Modal, Empty } from "./ui";
 import { Overview } from "./overview";
@@ -107,7 +109,7 @@ function Shell() {
     href === "/dashboard"
       ? ["/dashboard", "/demo"].includes(path)
       : path.startsWith(href);
-  if (loading && !user && !demo)
+  if (loading && !demo && (!user || !office.owner_id))
     return (
       <div className="loading-screen">
         <span className="brand">Elmtr App</span>
@@ -126,6 +128,10 @@ function Shell() {
         )}
       </>
     );
+  if (!demo && office.admin) return <AdminDashboard />;
+  if (!demo && office.activated === false) return <PendingActivation />;
+  if (path.startsWith("/admin"))
+    return <Empty title="لوحة الإدارة متاحة للأدمن فقط" />;
   const route = path.split("/").filter(Boolean);
   let content: React.ReactNode;
   switch (route[0]) {

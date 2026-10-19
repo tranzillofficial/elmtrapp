@@ -23,6 +23,7 @@ import { localFile, removeLocalFile } from "@/lib/files";
 import { sampleLaws, sampleArticles } from "@/lib/legal-sample";
 const KEY = "elmtrapp-demo-v1";
 export type OfficeContext = {
+  activated?: boolean;
   owner_id: string;
   admin: boolean;
   member: boolean;
@@ -147,6 +148,7 @@ export function Provider({
       if (error && error.name !== "AuthSessionMissingError") throw error;
       if (!user) {
         currentUser.current = null;
+        setOffice(defaultOffice);
         setUser(null);
         setData(EMPTY);
         setProfile(defaultProfile);
@@ -154,6 +156,7 @@ export function Provider({
         return;
       }
       if (currentUser.current !== user.id) {
+        setOffice(defaultOffice);
         setData(EMPTY);
         setProfile(defaultProfile);
         setEntitlement({ plan: "basic", expires_at: null });
@@ -169,6 +172,14 @@ export function Provider({
         throw new Error("الحساب الفرعي موقوف أو انتهت باقة المكتب");
       }
       setOffice(officeContext);
+      if (officeContext.activated === false && !officeContext.admin) {
+        setData(EMPTY);
+        return;
+      }
+      if (officeContext.admin) {
+        setData(EMPTY);
+        return;
+      }
       const tables = Object.keys(EMPTY) as Table[];
       const load = async (table: Table) => {
         const rows: unknown[] = [];

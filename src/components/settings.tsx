@@ -1,4 +1,5 @@
 "use client";
+import { ActivationPanel } from "./activation";
 import { InstallApp } from "./install";
 import { TeamSettings } from "./team";
 import { useEffect, useState } from "react";
@@ -45,6 +46,7 @@ export function Settings({
           <p>مساحة عمل على طريقتك.</p>
         </div>
       </div>
+      {!demo && <ActivationPanel />}
       <TeamSettings />
       <div className="settings-grid">
         <InstallApp />
@@ -253,8 +255,8 @@ export function Auth() {
               if (error) throw error;
               setMessage(
                 data.session
-                  ? "تم إنشاء حسابك"
-                  : "راجع بريدك الإلكتروني لتأكيد الحساب، ثم سجل الدخول.",
+                  ? "تم إنشاء حسابك وإرسال طلب التفعيل للإدارة"
+                  : "راجع بريدك لتأكيد الحساب، ثم سجل الدخول لمتابعة طلب التفعيل.",
               );
             } else {
               const { error } = await supabase.auth.signInWithPassword({

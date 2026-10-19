@@ -8,6 +8,9 @@ export default async function Page({
   const { path } = await params;
   if (!path?.length) return <Landing />;
   return (
-    <App initialDemo={path[0] === "demo"} forceAuth={path[0] === "login"} />
+    <App
+      initialDemo={path[0] === "demo"}
+      forceAuth={path[0] === "login" || path[0] === "admin"}
+    />
   );
 }

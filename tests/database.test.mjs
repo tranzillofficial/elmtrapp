@@ -14,11 +14,13 @@ const setup = await readFile(
 before(async () => {
   db = new PGlite();
   await db.exec(
-    `create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz);create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;`,
+    `create role anon;create role authenticated;create schema auth;create table auth.users(id uuid primary key,email text,email_confirmed_at timestamptz,created_at timestamptz default now(),raw_user_meta_data jsonb default '{}');create function auth.uid() returns uuid language sql stable as $$ select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid $$;grant usage on schema auth to authenticated,anon;grant execute on function auth.uid() to authenticated,anon;create schema storage;create table storage.buckets(id text primary key,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);create table storage.objects(id uuid primary key default gen_random_uuid(),bucket_id text,name text);alter table storage.objects enable row level security;grant usage on schema storage to authenticated;grant select,insert,update,delete on storage.objects to authenticated;create function storage.foldername(text) returns text[] language sql immutable as $$select string_to_array($1,'/')$$;`,
   );
   await db.exec(setup);
   await db.exec(setup); // Entire installation must be safe to re-run.
-  await db.exec(`insert into auth.users(id) values('${user1}'),('${user2}');`);
+  await db.exec(
+    `insert into auth.users(id,email_confirmed_at) values('${user1}',now()),('${user2}',now());update public.account_access set status='active';`,
+  );
 });
 after(async () => db?.close());
 async function asUser(id, sql) {
@@ -233,5 +235,112 @@ test("office seats, granular RLS, client documents and admin pricing", async () 
     (await asUser(user2, "select public.office_context() context")).rows[0]
       .context.active,
     false,
+  );
+});
+test("registration queues activation, admin approves base and monthly/yearly PRO", async () => {
+  const newcomer = "77777777-7777-4777-8777-777777777777";
+  await db.exec(
+    `insert into auth.users(id,email,email_confirmed_at) values('${newcomer}','new@example.com',now());`,
+  );
+  assert.equal(
+    (await asUser(newcomer, "select public.office_context() context")).rows[0]
+      .context.activated,
+    false,
+  );
+  assert.equal(
+    (
+      await asUser(
+        newcomer,
+        "select * from public.activation_requests where kind='system' and status='pending'",
+      )
+    ).rows.length,
+    1,
+  );
+  await assert.rejects(
+    asUser(
+      newcomer,
+      `insert into public.clients(owner_id,name) values('${newcomer}','قبل التفعيل')`,
+    ),
+  );
+  await assert.rejects(asUser(newcomer, "select public.admin_accounts()"));
+  await assert.rejects(
+    asUser(
+      newcomer,
+      `select public.admin_activation('${newcomer}','activate')`,
+    ),
+  );
+  await assert.rejects(
+    asUser(newcomer, `update public.account_access set status='active'`),
+  );
+  await asUser(
+    user1,
+    `select public.admin_activation('${newcomer}','activate')`,
+  );
+  await asUser(
+    newcomer,
+    `insert into public.clients(owner_id,name) values('${newcomer}','بعد الموافقة')`,
+  );
+  await asUser(newcomer, "select public.request_activation('pro','monthly')");
+  await asUser(newcomer, "select public.request_activation('pro','annual')");
+  assert.equal(
+    (
+      await asUser(
+        newcomer,
+        "select * from public.activation_requests where kind='pro' and status='pending'",
+      )
+    ).rows.length,
+    1,
+  );
+  const pending = (
+    await asUser(
+      user1,
+      `select id from public.activation_requests where owner_id='${newcomer}' and kind='pro' and status='pending'`,
+    )
+  ).rows[0].id;
+  await asUser(
+    user1,
+    `select public.admin_activation('${newcomer}','pro','monthly','${pending}')`,
+  );
+  assert.equal(
+    (
+      await db.query(
+        `select plan,expires_at>now()+interval '27 days' and expires_at<now()+interval '32 days' valid from public.entitlements where owner_id='${newcomer}'`,
+      )
+    ).rows[0].valid,
+    true,
+  );
+  await assert.rejects(
+    asUser(
+      user1,
+      `select public.admin_activation('${newcomer}','pro','annual','${pending}')`,
+    ),
+  );
+  await asUser(
+    user1,
+    `select public.admin_activation('${newcomer}','pro','annual')`,
+  );
+  assert.equal(
+    (
+      await db.query(
+        `select expires_at>now()+interval '364 days' valid from public.entitlements where owner_id='${newcomer}'`,
+      )
+    ).rows[0].valid,
+    true,
+  );
+  await asUser(
+    user1,
+    `select public.admin_activation('${newcomer}','suspend')`,
+  );
+  assert.equal(
+    (await asUser(newcomer, "select * from public.clients")).rows.length,
+    0,
+  );
+  const listed = (
+    await asUser(user1, "select public.admin_accounts() accounts")
+  ).rows[0].accounts;
+  assert.ok(
+    listed.some(
+      (a) => a.email === "new@example.com" && a.status === "suspended",
+    ),
   );
 });
