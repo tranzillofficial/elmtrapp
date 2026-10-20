@@ -1,3 +1,4 @@
+import { readMaintenance } from "@/lib/maintenance";
 import { createClient } from "@supabase/supabase-js";
 import { generateText } from "ai";
 import { z } from "zod";
@@ -16,6 +17,15 @@ const schema = z.object({
     .default([]),
 });
 export async function POST(request: Request) {
+  const status = await readMaintenance();
+  if (status.enabled)
+    return Response.json(
+      { error: status.message, maintenance: true },
+      {
+        status: 503,
+        headers: { "Retry-After": "60", "Cache-Control": "no-store" },
+      },
+    );
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL,
     key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key)

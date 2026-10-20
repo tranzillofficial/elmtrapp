@@ -172,3 +172,75 @@ test("pending office sees activation screen instead of law office", async ({
   ).toBeVisible();
   await expect(page.locator(".sidebar")).toHaveCount(0);
 });
+test("admin saves maintenance message/deadline, public demo pauses and release stays accessible", async ({
+  page,
+  request,
+}) => {
+  await fixture(page);
+  const control = "http://127.0.0.1:4179/__control";
+  let runtime = {
+    id: true,
+    maintenance_enabled: false,
+    maintenance_until: null as string | null,
+    maintenance_message: "بنحدث التطبيق",
+  };
+  await page.route("**/rest/v1/site_runtime*", async (route) => {
+    if (route.request().method() === "PATCH") {
+      runtime = { ...runtime, ...route.request().postDataJSON() };
+      await request.post(control, { data: runtime });
+    }
+    await route.fulfill({ json: runtime });
+  });
+  try {
+    await page.goto("/admin");
+    await page.getByRole("button", { name: "الصيانة", exact: true }).click();
+    await expect(page.getByText("الموقع متاح", { exact: true })).toBeVisible();
+    await page.getByRole("checkbox", { name: "تفعيل وضع الصيانة" }).check();
+    await page
+      .getByLabel("موعد انتهاء التحديث المتوقع (بتوقيت جهازك)", { exact: true })
+      .fill("2020-01-01T10:00");
+    await page
+      .getByRole("button", { name: "حفظ وضع الصيانة", exact: true })
+      .click();
+    await expect(
+      page.getByText("اختر موعد انتهاء متوقع بعد الوقت الحالي"),
+    ).toBeVisible();
+    const date = new Date(Date.now() + 3600000);
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    await page
+      .getByLabel("موعد انتهاء التحديث المتوقع (بتوقيت جهازك)", { exact: true })
+      .fill(local);
+    await page
+      .getByLabel("الرسالة الظاهرة للزوار")
+      .fill("تحديث من لوحة الأدمن");
+    await page
+      .getByRole("button", { name: "حفظ وضع الصيانة", exact: true })
+      .click();
+    await expect(
+      page.getByText("الصيانة مفعلة", { exact: true }),
+    ).toBeVisible();
+    expect(runtime.maintenance_enabled).toBe(true);
+    expect(runtime.maintenance_message).toBe("تحديث من لوحة الأدمن");
+    const visitor = await page.context().newPage();
+    await visitor.goto("/demo");
+    await expect(
+      visitor.getByRole("heading", { name: "الموقع تحت التحديث" }),
+    ).toBeVisible();
+    await expect(visitor.getByText("تحديث من لوحة الأدمن")).toBeVisible();
+    await page
+      .getByRole("button", { name: "إيقاف الصيانة وفتح الموقع", exact: true })
+      .click();
+    await expect(page.getByText("الموقع متاح", { exact: true })).toBeVisible();
+    await visitor.evaluate(() => window.dispatchEvent(new Event("focus")));
+    await expect(visitor.locator(".main-content")).toBeVisible({
+      timeout: 20000,
+    });
+    await visitor.close();
+  } finally {
+    await request.post(control, {
+      data: { maintenance_enabled: false, maintenance_until: null },
+    });
+  }
+});

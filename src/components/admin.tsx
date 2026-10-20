@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useStore } from "./provider";
+import { MaintenanceSettings } from "./maintenance-settings";
 import { AdminSettings } from "./team";
 import { ActivationRequest, requestLabel } from "./activation";
 import { Empty, Field, Form, Modal, SearchBox, str } from "./ui";
@@ -151,6 +152,7 @@ export function AdminDashboard() {
             ["requests", `طلبات التفعيل (${pending.length})`],
             ["pricing", "الأسعار والفريق"],
             ["settings", "إعدادات التطبيق"],
+            ["maintenance", "الصيانة"],
           ].map(([id, label]) => (
             <button
               key={id}
@@ -330,6 +332,8 @@ export function AdminDashboard() {
                 ))}
             </section>
           </>
+        ) : tab === "maintenance" ? (
+          <MaintenanceSettings />
         ) : tab === "pricing" ? (
           <AdminSettings />
         ) : (

@@ -618,3 +618,50 @@ test("advance credits, office/client expenses, composite ownership and reviewed 
     ),
   );
 });
+test("maintenance is public read, admin-only write and singleton cannot be removed", async () => {
+  const before = (await asUser(user2, "select * from public.site_runtime"))
+    .rows[0];
+  assert.equal(before.maintenance_enabled, false);
+  assert.equal(
+    (
+      await asUser(
+        user2,
+        "update public.site_runtime set maintenance_enabled=true,maintenance_until=now()+interval '1 hour' returning id",
+      )
+    ).rows.length,
+    0,
+  );
+  await assert.rejects(asUser(user2, "delete from public.site_runtime"));
+  await assert.rejects(
+    asUser(
+      user1,
+      "update public.site_runtime set maintenance_enabled=true,maintenance_until=null",
+    ),
+  );
+  await asUser(
+    user1,
+    "update public.site_runtime set maintenance_enabled=true,maintenance_until=now()+interval '1 hour',maintenance_message='تحديث الاختبار'",
+  );
+  await db.exec("set role anon");
+  try {
+    assert.equal(
+      (await db.query("select maintenance_enabled from public.site_runtime"))
+        .rows[0].maintenance_enabled,
+      true,
+    );
+    await assert.rejects(
+      db.exec("update public.site_runtime set maintenance_enabled=false"),
+    );
+  } finally {
+    await db.exec("reset role");
+  }
+  await asUser(
+    user1,
+    "update public.site_runtime set maintenance_enabled=false",
+  );
+  assert.equal(
+    (await asUser(user2, "select maintenance_enabled from public.site_runtime"))
+      .rows[0].maintenance_enabled,
+    false,
+  );
+});
