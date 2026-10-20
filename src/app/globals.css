@@ -2202,7 +2202,7 @@ hr {
   .topbar-actions {
     gap: 2px;
   }
-  .topbar-actions > .icon-button:first-child {
+  .topbar-actions > .icon-button[aria-label^="تفعيل الوضع"] {
     display: none;
   }
   .profile-pill {
@@ -3074,3 +3074,26 @@ hr {
   .document-grid { grid-template-columns:minmax(0,1fr); }
   .document-grid .document-preview { height:96px; }
 }
+.case-quick-actions { display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px; }
+.case-hub-grid { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px; }
+.case-hub-grid .panel { margin:0 0 14px;padding:16px;min-width:0; }
+.case-hub-grid h2 { font-size:14px;margin:0 0 10px; }
+.case-latest-note { white-space:pre-wrap;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }
+.hub-document { display:flex;flex-wrap:wrap;align-items:center;gap:8px;padding-block:6px;overflow-wrap:anywhere; }
+.case-timeline ol { list-style:none;padding:0;margin:0; }
+.case-timeline li { display:flex;gap:14px;padding:10px 0;border-bottom:1px solid var(--line);min-width:0; }
+.case-timeline time { color:var(--muted);font-size:11px;flex:0 0 110px; }
+.case-timeline p { white-space:pre-wrap;overflow-wrap:anywhere;margin:4px 0 0;font-size:12px; }
+.case-timeline li>div { min-width:0; }
+.expense-row,.power-alert-row { display:flex;align-items:center;gap:8px;padding-block:10px;border-bottom:1px solid var(--line);flex-wrap:wrap; }
+.expense-row .row-main { flex:1;min-width:140px; }
+.expense-row small { display:block; }
+.power-alert-row .notification-row { flex:1;border:0;min-width:0; }
+.global-results { max-height:55vh;overflow-y:auto; }
+.global-results .notification-row { overflow-wrap:anywhere; }
+.search-type { color:var(--gold);background:var(--gold-light);border-radius:5px;padding:3px 7px;white-space:nowrap;font-size:11px; }
+@media(max-width:767px){.case-hub-grid{grid-template-columns:minmax(0,1fr)}.case-timeline li{gap:8px}.case-timeline time{flex-basis:85px}.expense-row .row-main{flex-basis:100%}}
+.case-hub-context { display:flex;flex-wrap:wrap;gap:10px 20px;padding:12px 16px;margin-block:0 14px; }
+.case-hub-context span,.case-hub-context a { overflow-wrap:anywhere; }
+
+.case-timeline p { display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden; }

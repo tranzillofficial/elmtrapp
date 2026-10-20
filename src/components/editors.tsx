@@ -108,7 +108,6 @@ export function CaseEditor({
               client_id: str(f, "client_id"),
               court: str(f, "court"),
               district_court: str(f, "district_court"),
-              opponent: str(f, "opponent"),
               fee: Number(f.get("fee")),
               summary: str(f, "summary"),
               status: str(f, "status") as Case["status"],
@@ -168,9 +167,6 @@ export function CaseEditor({
             />
           </Field>
         </div>
-        <Field label="الخصم">
-          <input name="opponent" defaultValue={item?.opponent} />
-        </Field>
         <Field label="أتعاب القضية (ج.م)">
           <input
             name="fee"
@@ -301,10 +297,14 @@ export function PaymentEditor({
     <Modal title={item ? "تعديل دفعة" : "تسجيل دفعة"} onClose={onClose}>
       <p className="payment-context">
         {data.clients.find((c) => c.id === clientId)?.name}{" "}
-        <strong>المتبقي {money(remaining)} ج.م</strong>
+        <strong>
+          {remaining < 0 ? "رصيد لصالح الموكل" : "المتبقي"}{" "}
+          {money(Math.abs(remaining))} ج.م
+        </strong>
       </p>
       <p className="hint">
-        تُخصم الدفعة من إجمالي حساب العميل، وتشمل كل قضاياه.
+        تُخصم الدفعة من إجمالي الحساب. أي مبلغ زائد أو مقدم قبل الأتعاب يظهر
+        رصيدًا لصالح الموكل.
       </p>
       <Form
         onCancel={onClose}
@@ -337,7 +337,7 @@ export function PaymentEditor({
             required
             min="0.01"
             step="0.01"
-            max={remaining}
+            max="999999999"
             defaultValue={item?.amount}
             autoFocus
           />

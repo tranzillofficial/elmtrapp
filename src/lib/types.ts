@@ -75,7 +75,27 @@ export const powerTypes = {
   general: "عام رسمي",
   litigation: "خاص بالقضايا",
 } as const;
+export const expenseCategories = {
+  court: "رسوم المحكمة",
+  advertising: "إعلانات",
+  transport: "انتقالات",
+  other: "أخرى",
+} as const;
+export type Expense = {
+  id: string;
+  owner_id?: string;
+  client_id: string;
+  case_id: string | null;
+  amount: number;
+  category: keyof typeof expenseCategories;
+  billing: "client" | "office";
+  description: string;
+  spent_on: string;
+  created_at: string;
+};
 export type Power = {
+  reminder_days?: number;
+  reviewed_for_expiry?: string | null;
   official_number?: string;
   official_type?: "" | keyof typeof powerTypes;
   id: string;
@@ -117,6 +137,7 @@ export type Entitlement = {
 };
 export type Profile = { full_name: string; office_name: string; phone: string };
 export type Data = {
+  expenses: Expense[];
   powers: Power[];
   clients: Client[];
   cases: Case[];
@@ -131,6 +152,7 @@ export type Data = {
 export type Table = keyof Data;
 export type Row<T extends Table> = Data[T][number];
 export const EMPTY: Data = {
+  expenses: [],
   powers: [],
   clients: [],
   cases: [],
@@ -167,7 +189,10 @@ export const totalFees = (data: Data, id: string) =>
     cents(data.clients.find((c) => c.id === id)?.opening_balance ?? 0) +
       data.cases
         .filter((c) => c.client_id === id)
-        .reduce((sum, c) => sum + cents(c.fee), 0),
+        .reduce((sum, c) => sum + cents(c.fee), 0) +
+      data.expenses
+        .filter((e) => e.client_id === id && e.billing === "client")
+        .reduce((s, e) => s + cents(e.amount), 0),
   );
 export const paid = (data: Data, id: string) =>
   fromCents(
@@ -177,3 +202,6 @@ export const paid = (data: Data, id: string) =>
   );
 export const balance = (data: Data, id: string) =>
   fromCents(cents(totalFees(data, id)) - cents(paid(data, id)));
+
+export const accountLabel = (value: number) =>
+  value < 0 ? "رصيد لصالح الموكل" : "المتبقي";

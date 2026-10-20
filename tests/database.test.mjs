@@ -65,15 +65,23 @@ test("ownership, finance, subscriptions and private storage are enforced", async
       `insert into public.notes(owner_id,case_id,body) values('${user2}','${caseId}','تعدي');`,
     ),
   );
-  await assert.rejects(
-    asUser(
-      user1,
-      `insert into public.payments(owner_id,client_id,amount) values('${user1}','${client}',751);`,
-    ),
+  await asUser(
+    user1,
+    `insert into public.payments(owner_id,client_id,amount,kind) values('${user1}','${client}',751,'advance')`,
   );
-  await assert.rejects(
-    asUser(user1, `update public.cases set fee=200 where id='${caseId}';`),
+  assert.equal(
+    (await asUser(user1, "select balance from public.client_balances")).rows[0]
+      .balance,
+    "-1.00",
   );
+  await asUser(user1, `delete from public.payments where amount=751`);
+  await asUser(user1, `update public.cases set fee=200 where id='${caseId}'`);
+  assert.equal(
+    (await asUser(user1, "select balance from public.client_balances")).rows[0]
+      .balance,
+    "-50.00",
+  );
+  await asUser(user1, `update public.cases set fee=1000 where id='${caseId}'`);
   await asUser(
     user2,
     `update public.cases set title='hacked' where id='${caseId}'`,
@@ -503,5 +511,110 @@ test("office details keep defaults and enforce document and power classification
   );
   await assert.rejects(
     asUser(user1, `update public.payments set kind='invalid'`),
+  );
+});
+test("advance credits, office/client expenses, composite ownership and reviewed reminders", async () => {
+  const id = "99999999-9999-4999-8999-999999999999";
+  await asUser(
+    user1,
+    `insert into public.clients(id,owner_id,name) values('${id}','${user1}','موكل رصيد مقدم')`,
+  );
+  await asUser(
+    user1,
+    `insert into public.payments(owner_id,client_id,amount,kind) values('${user1}','${id}',500,'advance')`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select balance from public.client_balances where id='${id}'`,
+      )
+    ).rows[0].balance,
+    "-500.00",
+  );
+  await asUser(
+    user1,
+    `insert into public.expenses(owner_id,client_id,amount,category,billing,description,spent_on) values('${user1}','${id}',200,'court','client','رسوم','2026-10-20'),('${user1}','${id}',100,'transport','office','انتقالات','2026-10-20')`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select balance from public.client_balances where id='${id}'`,
+      )
+    ).rows[0].balance,
+    "-300.00",
+  );
+  await asUser(
+    user1,
+    `update public.expenses set amount=250 where client_id='${id}' and billing='client'`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select balance from public.client_balances where id='${id}'`,
+      )
+    ).rows[0].balance,
+    "-250.00",
+  );
+  assert.equal(
+    (
+      await asUser(
+        user2,
+        `select * from public.expenses where client_id='${id}'`,
+      )
+    ).rows.length,
+    0,
+  );
+  await assert.rejects(
+    asUser(
+      user2,
+      `insert into public.expenses(owner_id,client_id,amount,billing,description,spent_on) values('${user1}','${id}',1,'client','تعدي','2026-10-20')`,
+    ),
+  );
+  await assert.rejects(
+    asUser(
+      user1,
+      `insert into public.expenses(owner_id,client_id,case_id,amount,billing,description,spent_on) values('${user1}','${id}','${caseId}',1,'client','قضية تخص غيره','2026-10-20')`,
+    ),
+  );
+  await assert.rejects(
+    asUser(
+      user1,
+      `insert into public.payments(owner_id,client_id,amount) values('${user1}','${id}',-10)`,
+    ),
+  );
+  await asUser(
+    user1,
+    `update public.powers set reviewed_for_expiry=expires_on where owner_id='${user1}'`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select reviewed_for_expiry=expires_on ok from public.powers where owner_id='${user1}'`,
+      )
+    ).rows[0].ok,
+    true,
+  );
+  await asUser(
+    user1,
+    `update public.powers set expires_on=expires_on+1 where owner_id='${user1}'`,
+  );
+  assert.equal(
+    (
+      await asUser(
+        user1,
+        `select reviewed_for_expiry from public.powers where owner_id='${user1}'`,
+      )
+    ).rows[0].reviewed_for_expiry,
+    null,
+  );
+  await assert.rejects(
+    asUser(
+      user1,
+      `update public.powers set reminder_days=0 where owner_id='${user1}'`,
+    ),
   );
 });

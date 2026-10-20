@@ -18,7 +18,11 @@ export function powerDaysLeft(date: string, now = new Date()) {
 }
 export function expiringPowers(powers: Power[], now = new Date()) {
   return powers
-    .filter((p) => powerDaysLeft(p.expires_on, now) <= 30)
+    .filter(
+      (p) =>
+        p.reviewed_for_expiry !== p.expires_on &&
+        powerDaysLeft(p.expires_on, now) <= (p.reminder_days ?? 30),
+    )
     .toSorted((a, b) => a.expires_on.localeCompare(b.expires_on));
 }
 export function powerExpiryLabel(date: string) {

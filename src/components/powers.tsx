@@ -1,4 +1,5 @@
 "use client";
+import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Plus, FileText } from "lucide-react";
 import { useStore } from "./provider";
@@ -7,7 +8,7 @@ import { powerDaysLeft } from "@/lib/power-alerts";
 import { SharePdf } from "./share-pdf";
 import { day, powerTypes, type Power } from "@/lib/types";
 export function Powers() {
-  const { data, office, savePower, readFile } = useStore();
+  const { data, office, savePower, readFile, save, setError } = useStore();
   const [search, setSearch] = useState(""),
     [editor, setEditor] = useState<Power | "new" | null>(null);
   const [preview, setPreview] = useState<{ url: string; title: string } | null>(
@@ -21,12 +22,15 @@ export function Powers() {
     },
     [preview],
   );
+  const record = useSearchParams().get("record");
   const writable = !office.member || office.permissions.includes("write");
   const records = data.powers
-    .filter((p) =>
-      `${p.principal_name} ${p.phone} ${p.official_number ?? ""}`.includes(
-        search,
-      ),
+    .filter(
+      (p) =>
+        (!record || p.id === record) &&
+        `${p.principal_name} ${p.phone} ${p.official_number ?? ""}`.includes(
+          search,
+        ),
     )
     .toSorted((a, b) => a.expires_on.localeCompare(b.expires_on));
   return (
@@ -113,6 +117,39 @@ export function Powers() {
                   تعديل البيانات / تجديد التاريخ
                 </button>
               )}
+              {writable && (
+                <button
+                  className="text-button"
+                  onClick={async () => {
+                    try {
+                      await save(
+                        "powers",
+                        {
+                          reviewed_for_expiry:
+                            p.reviewed_for_expiry === p.expires_on
+                              ? null
+                              : p.expires_on,
+                        },
+                        p.id,
+                      );
+                    } catch (e) {
+                      setError(
+                        e instanceof Error ? e.message : "تعذر تحديث التنبيه",
+                      );
+                    }
+                  }}
+                >
+                  {p.reviewed_for_expiry === p.expires_on
+                    ? "إعادة تفعيل التنبيه"
+                    : "تمت مراجعة التنبيه"}
+                </button>
+              )}
+              <p className="hint">
+                التنبيه قبل الانتهاء بـ{p.reminder_days ?? 30} يوم
+                {p.reviewed_for_expiry === p.expires_on
+                  ? " · تمت المراجعة"
+                  : ""}
+              </p>
               <p className="hint">محفوظ: صورة التوكيل · البطاقة وجه وظهر</p>
             </article>
           );
@@ -160,6 +197,7 @@ export function Powers() {
                     "official_type",
                   ) as Power["official_type"],
                   expires_on: str(f, "expires_on"),
+                  reminder_days: Number(f.get("reminder_days")),
                 },
                 editor === "new"
                   ? ([f.get("poa"), f.get("front"), f.get("back")] as File[])
@@ -223,6 +261,18 @@ export function Powers() {
                 />
               </Field>
             </div>
+            <Field label="التنبيه قبل الانتهاء (يوم)">
+              <input
+                type="number"
+                min="1"
+                max="365"
+                name="reminder_days"
+                required
+                defaultValue={
+                  editor === "new" ? 30 : (editor.reminder_days ?? 30)
+                }
+              />
+            </Field>
             {editor === "new" && (
               <>
                 <p className="hint">

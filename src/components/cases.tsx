@@ -16,6 +16,9 @@ import {
   StickyNote,
   Download,
 } from "lucide-react";
+import { CaseHub } from "./case-hub";
+import { Expenses, ExpenseEditor } from "./expenses";
+import { Modal } from "./ui";
 import { SharePdf } from "./share-pdf";
 import { useStore } from "./provider";
 import { CaseEditor, HearingEditor } from "./editors";
@@ -28,7 +31,7 @@ import {
   Form,
   Field,
 } from "./ui";
-import { day, time, money, Hearing } from "@/lib/types";
+import { day, money, Hearing } from "@/lib/types";
 import { HearingRow } from "./overview";
 export function Cases() {
   const { data } = useStore();
@@ -168,7 +171,9 @@ export function CaseDetail({ id }: { id: string }) {
   const [tab, setTab] = useState("details"),
     [edit, setEdit] = useState(false),
     [hearing, setHearing] = useState<Hearing | "new" | null>(null),
-    [uploading, setUploading] = useState(false);
+    [uploading, setUploading] = useState(false),
+    [quickNote, setQuickNote] = useState(false),
+    [expense, setExpense] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const c = data.cases.find((x) => x.id === id);
   if (!c)
@@ -178,11 +183,9 @@ export function CaseDetail({ id }: { id: string }) {
         action={<Link href="/cases">العودة للقضايا</Link>}
       />
     );
-  const client = data.clients.find((x) => x.id === c.client_id);
   const hearings = data.hearings
     .filter((h) => h.case_id === id)
     .sort((a, b) => a.starts_at.localeCompare(b.starts_at));
-  const next = hearings.find((h) => new Date(h.starts_at) > new Date());
   const docs = data.documents.filter((d) => d.case_id === id);
   const notes = data.notes.filter((n) => n.case_id === id);
   return (
@@ -203,27 +206,18 @@ export function CaseDetail({ id }: { id: string }) {
           </IconButton>
         </div>
       </div>
+      <CaseHub
+        id={id}
+        onHearing={() => setHearing("new")}
+        onNote={() => setQuickNote(true)}
+        onExpense={() => setExpense(true)}
+        onDocuments={() => {
+          setTab("documents");
+          requestAnimationFrame(() => input.current?.click());
+        }}
+      />
       <div className="detail-layout">
         <section className="panel detail-main">
-          <div className="case-facts">
-            <Link href={`/clients/${c.client_id}`}>
-              <UserRound size={19} />
-              <span>
-                <small>العميل</small>
-                <b>{client?.name}</b>
-              </span>
-            </Link>
-            <div>
-              <MapPin size={19} />
-              <span>
-                <small>المحكمة</small>
-                <b>{c.court}</b>
-                {c.district_court && (
-                  <small>المحكمة الجزئية: {c.district_court}</small>
-                )}
-              </span>
-            </div>
-          </div>
           <div className="tabs" role="tablist">
             {[
               ["details", "التفاصيل"],
@@ -245,25 +239,6 @@ export function CaseDetail({ id }: { id: string }) {
             <>
               <SectionTitle title="ملخص القضية" />
               <p className="prose">{c.summary || "لم يُضف ملخص بعد."}</p>
-              {c.opponent && <p className="muted">الخصم: {c.opponent}</p>}
-              {next && (
-                <div className="next-hearing">
-                  <CalendarDays size={24} />
-                  <div>
-                    <strong>الجلسة القادمة</strong>
-                    <p>
-                      {day(next.starts_at)} · {time(next.starts_at)}
-                    </p>
-                    <small>{next.court}</small>
-                  </div>
-                  <IconButton
-                    label="إضافة الجلسة للتقويم"
-                    onClick={() => downloadCalendar(next, c.title)}
-                  >
-                    <Download size={17} />
-                  </IconButton>
-                </div>
-              )}
               <SectionTitle title="ملاحظات القضية" />
               {notes.map((n) => (
                 <div className="note" key={n.id}>
@@ -431,6 +406,7 @@ export function CaseDetail({ id }: { id: string }) {
           )}
         </section>
         <aside className="detail-aside">
+          <Expenses clientId={c.client_id} caseId={id} />
           <section className="panel">
             <SectionTitle title="بيانات الملف" />
             <dl className="data-list">
@@ -464,6 +440,28 @@ export function CaseDetail({ id }: { id: string }) {
           </Link>
         </aside>
       </div>
+      {expense && (
+        <ExpenseEditor
+          clientId={c.client_id}
+          caseId={id}
+          onClose={() => setExpense(false)}
+        />
+      )}
+      {quickNote && (
+        <Modal title="ملاحظة سريعة" onClose={() => setQuickNote(false)}>
+          <Form
+            onCancel={() => setQuickNote(false)}
+            onSubmit={async (f) => {
+              await save("notes", { case_id: id, body: String(f.get("body")) });
+              setQuickNote(false);
+            }}
+          >
+            <Field label="نص الملاحظة">
+              <textarea name="body" required maxLength={10000} autoFocus />
+            </Field>
+          </Form>
+        </Modal>
+      )}
       {edit && <CaseEditor item={c} onClose={() => setEdit(false)} />}{" "}
       {hearing && (
         <HearingEditor

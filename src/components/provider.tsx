@@ -18,7 +18,6 @@ import {
   Row,
   Profile,
   Entitlement,
-  balance,
 } from "@/lib/types";
 import { localFile, removeLocalFile } from "@/lib/files";
 import { sampleLaws, sampleArticles } from "@/lib/legal-sample";
@@ -75,6 +74,7 @@ type Store = {
       | "expires_on"
       | "official_number"
       | "official_type"
+      | "reminder_days"
     >,
     files: File[],
     id?: string,
@@ -321,7 +321,9 @@ export function Provider({
             ? "library"
             : table === "powers"
               ? "documents"
-              : table,
+              : table === "expenses"
+                ? "payments"
+                : table,
         ))
     )
       throw new Error("ليست لديك صلاحية تعديل هذا القسم");
@@ -333,17 +335,6 @@ export function Provider({
         if (!v.name?.trim()) throw new Error("اسم العميل مطلوب");
         if (Number(v.opening_balance) < 0)
           throw new Error("الرصيد السابق يجب ألا يقل عن صفر");
-        if (
-          id &&
-          Number(v.opening_balance) +
-            data.cases
-              .filter((c) => c.client_id === id)
-              .reduce((s, c) => s + Number(c.fee), 0) <
-            data.payments
-              .filter((p) => p.client_id === id)
-              .reduce((s, p) => s + Number(p.amount), 0)
-        )
-          throw new Error("لا يمكن خفض الرصيد عن المدفوع");
       }
       if (table === "cases") {
         const v = values as Partial<Data["cases"][number]>;
@@ -353,12 +344,35 @@ export function Provider({
           throw new Error("عنوان القضية ورقمها مطلوبان");
         if (data.cases.some((c) => c.id !== id && c.number === v.number))
           throw new Error("رقم القضية موجود بالفعل");
-        const old = data.cases.find((c) => c.id === id);
+      }
+      if (table === "expenses") {
+        const v = values as Partial<Data["expenses"][number]>;
+        if (
+          !data.clients.some((c) => c.id === v.client_id) ||
+          !v.description?.trim() ||
+          !Number.isFinite(Number(v.amount)) ||
+          Number(v.amount) <= 0 ||
+          Number(v.amount) > 999999999
+        )
+          throw new Error("بيانات المصروف غير صحيحة");
+        if (
+          v.case_id &&
+          !data.cases.some(
+            (c) => c.id === v.case_id && c.client_id === v.client_id,
+          )
+        )
+          throw new Error("القضية لا تخص هذا الموكل");
+      }
+      if (table === "powers" && id) {
+        const old = data.powers.find((p) => p.id === id);
+        const v = values as Partial<Power>;
         if (
           old &&
-          balance(data, v.client_id!) + Number(v.fee) - Number(old.fee) < 0
+          ((v.expires_on !== undefined && v.expires_on !== old.expires_on) ||
+            (v.reminder_days !== undefined &&
+              v.reminder_days !== (old.reminder_days ?? 30)))
         )
-          throw new Error("لا يمكن خفض الأتعاب عن إجمالي المدفوع");
+          Object.assign(values, { reviewed_for_expiry: null });
       }
       const next = { ...data };
       const rows = [...data[table]] as { id: string }[];
@@ -369,13 +383,13 @@ export function Provider({
       };
       if (table === "payments") {
         const v = values as Partial<Data["payments"][number]>;
-        const old = id ? data.payments.find((p) => p.id === id) : null;
         if (
+          !data.clients.some((c) => c.id === v.client_id) ||
+          !Number.isFinite(Number(v.amount)) ||
           Number(v.amount) <= 0 ||
-          Number(v.amount) >
-            balance(data, v.client_id ?? "") + Number(old?.amount ?? 0)
+          Number(v.amount) > 999999999
         )
-          throw new Error("الدفعة يجب أن تكون أكبر من صفر ولا تتجاوز المتبقي");
+          throw new Error("أدخل عميلًا ومبلغًا صحيحًا أكبر من صفر");
       }
       if (id)
         Object.assign(next, {
@@ -405,7 +419,9 @@ export function Provider({
             ? "library"
             : table === "powers"
               ? "documents"
-              : table,
+              : table === "expenses"
+                ? "payments"
+                : table,
         ))
     )
       throw new Error("ليست لديك صلاحية تعديل هذا القسم");
@@ -415,11 +431,18 @@ export function Provider({
       Object.assign(next, {
         [table]: (data[table] as { id: string }[]).filter((r) => r.id !== id),
       });
+      if (table === "cases" && data.expenses.some((e) => e.case_id === id))
+        throw new Error("احذف أو عدل المصروفات المرتبطة قبل حذف القضية");
       if (table === "cases") {
         for (const t of ["hearings", "notes", "documents"] as const)
           Object.assign(next, { [t]: data[t].filter((r) => r.case_id !== id) });
       }
-      if (table === "clients" && data.cases.some((c) => c.client_id === id))
+      if (
+        table === "clients" &&
+        [...data.cases, ...data.expenses, ...data.payments].some(
+          (c) => c.client_id === id,
+        )
+      )
         throw new Error("لا يمكن حذف عميل مرتبط بقضايا");
       setData(next);
     } else {
@@ -488,6 +511,7 @@ export function Provider({
       | "expires_on"
       | "official_number"
       | "official_type"
+      | "reminder_days"
     >,
     files: File[],
     id?: string,

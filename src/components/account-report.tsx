@@ -3,7 +3,15 @@ import { useRef } from "react";
 import { cairoDate } from "@/lib/power-alerts";
 import { Modal } from "./ui";
 import { useStore } from "./provider";
-import { balance, totalFees, paid, money, day } from "@/lib/types";
+import {
+  balance,
+  totalFees,
+  paid,
+  money,
+  day,
+  accountLabel,
+  expenseCategories,
+} from "@/lib/types";
 export function AccountReport({
   id,
   onClose,
@@ -47,6 +55,16 @@ export function AccountReport({
         debit: Number(c.fee),
         credit: 0,
         notes: "",
+      })),
+    ...data.expenses
+      .filter((e) => e.client_id === id && e.billing === "client")
+      .map((e) => ({
+        id: e.id,
+        date: e.spent_on,
+        description: `مصروف مستحق: ${e.description}`,
+        debit: Number(e.amount),
+        credit: 0,
+        notes: expenseCategories[e.category],
       })),
     ...data.payments
       .filter((p) => p.client_id === id)
@@ -98,8 +116,8 @@ export function AccountReport({
   return (
     <Modal title="كشف حساب الموكل" onClose={onClose}>
       <p className="hint">
-        كشف كامل لكل الأتعاب والدفعات المسجلة. من الطباعة اختَر حفظ بصيغة PDF
-        لتصدير نسخة.
+        كشف كامل لكل الأتعاب والمصروفات والدفعات المسجلة. من الطباعة اختَر حفظ
+        بصيغة PDF لتصدير نسخة.
       </p>
       <button className="button primary" onClick={print}>
         طباعة / حفظ PDF
@@ -122,14 +140,15 @@ export function AccountReport({
         </header>
         <div className="statement-summary">
           <span>
-            إجمالي الأتعاب والرصيد الافتتاحي
+            إجمالي المستحقات (الأتعاب والمصروفات والرصيد الافتتاحي)
             <b>{money(totalFees(data, id))} ج.م</b>
           </span>
           <span>
             إجمالي المدفوع<b>{money(paid(data, id))} ج.م</b>
           </span>
           <span>
-            المتبقي<b>{money(balance(data, id))} ج.م</b>
+            {accountLabel(balance(data, id))}
+            <b>{money(Math.abs(balance(data, id)))} ج.م</b>
           </span>
         </div>
         <div className="statement-table-wrap">
@@ -166,6 +185,38 @@ export function AccountReport({
           </table>
         </div>
         {!rows.length && <p>لا توجد حركات مالية مسجلة.</p>}
+        <h2>تفاصيل المصروفات</h2>
+        <div className="statement-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>التاريخ</th>
+                <th>البيان</th>
+                <th>المبلغ</th>
+                <th>يتحمله</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.expenses
+                .filter((e) => e.client_id === id)
+                .map((e) => (
+                  <tr key={e.id}>
+                    <td>{day(`${e.spent_on}T12:00:00`)}</td>
+                    <td>
+                      {e.description} · {expenseCategories[e.category]}
+                    </td>
+                    <td>{money(e.amount)}</td>
+                    <td>
+                      {e.billing === "client"
+                        ? "الموكل"
+                        : "المكتب (لا يضاف للحساب)"}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+        <p>الرصيد السالب في سجل الحركات يعني مبلغًا لصالح الموكل.</p>
         <p className="statement-footer">
           الدفعات تخص حساب الموكل بالكامل. الأرقام حسب البيانات المسجلة وقت
           إصدار الكشف.

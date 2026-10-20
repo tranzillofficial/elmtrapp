@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   LoaderCircle,
 } from "lucide-react";
+import { GlobalSearch } from "./global-search";
 import { PowerAlerts } from "./power-alerts";
 import { expiringPowers } from "@/lib/power-alerts";
 import { AdminDashboard } from "./admin";
@@ -269,6 +270,7 @@ function Shell() {
             Elmtr App
           </Link>
           <div className="topbar-actions">
+            <GlobalSearch />
             <IconButton
               label={
                 theme === "light" ? "تفعيل الوضع الداكن" : "تفعيل الوضع الفاتح"

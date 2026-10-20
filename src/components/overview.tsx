@@ -87,7 +87,9 @@ export function Overview() {
     },
     {
       title: "المستحقات",
-      value: money(data.clients.reduce((s, c) => s + balance(data, c.id), 0)),
+      value: money(
+        data.clients.reduce((s, c) => s + Math.max(0, balance(data, c.id)), 0),
+      ),
       Icon: Wallet,
       href: "/clients",
       caption: "إجمالي المتبقي · ج.م",

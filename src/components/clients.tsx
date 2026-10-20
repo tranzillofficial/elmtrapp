@@ -1,4 +1,5 @@
 "use client";
+import { Expenses } from "./expenses";
 import { AccountReport } from "./account-report";
 import { ClientFiles } from "./client-files";
 import { useState } from "react";
@@ -18,7 +19,15 @@ import {
 import { useStore } from "./provider";
 import { ClientEditor, PaymentEditor, CaseEditor } from "./editors";
 import { SearchBox, Empty, SectionTitle, IconButton, Badge } from "./ui";
-import { balance, paid, totalFees, money, day, Payment } from "@/lib/types";
+import {
+  balance,
+  paid,
+  totalFees,
+  money,
+  day,
+  Payment,
+  accountLabel,
+} from "@/lib/types";
 export function Clients() {
   const { data } = useStore();
   const [search, setSearch] = useState(""),
@@ -61,9 +70,9 @@ export function Clients() {
             </div>
             <div className="client-card-account">
               <span>
-                المتبقي
+                {accountLabel(balance(data, c.id))}
                 <strong>
-                  {money(balance(data, c.id))} <small>ج.م</small>
+                  {money(Math.abs(balance(data, c.id)))} <small>ج.م</small>
                 </strong>
               </span>
               <span>
@@ -143,9 +152,9 @@ export function ClientDetail({ id }: { id: string }) {
           </div>
           <div className="account-stats">
             {[
-              ["الأتعاب", totalFees(data, id)],
+              ["إجمالي المستحقات", totalFees(data, id)],
               ["المدفوع", paid(data, id)],
-              ["المتبقي", balance(data, id)],
+              [accountLabel(balance(data, id)), Math.abs(balance(data, id))],
             ].map(([l, v]) => (
               <div key={l}>
                 <span>{l}</span>
@@ -157,7 +166,6 @@ export function ClientDetail({ id }: { id: string }) {
           <button
             className="button primary full"
             onClick={() => setPayment("new")}
-            disabled={balance(data, id) <= 0}
           >
             <Wallet size={17} />
             تسجيل دفعة
@@ -221,6 +229,7 @@ export function ClientDetail({ id }: { id: string }) {
           )}
         </section>
         <aside>
+          <Expenses clientId={id} />
           <ClientFiles id={id} />
           <section className="panel">
             <SectionTitle

@@ -1,4 +1,5 @@
 "use client";
+import { useSearchParams } from "next/navigation";
 import { useState } from "react";
 import Link from "next/link";
 import { FileText, ScanLine, Download } from "lucide-react";
@@ -12,8 +13,10 @@ export function Documents() {
   const [category, setCategory] = useState("all"),
     [busy, setBusy] = useState("");
   const writable = !office.member || office.permissions.includes("write");
+  const record = useSearchParams().get("record");
   const docs = data.documents.filter(
     (d) =>
+      (!record || d.id === record) &&
       (category === "all" || (d.category ?? "other") === category) &&
       `${d.name} ${data.cases.find((c) => c.id === d.case_id)?.title ?? data.clients.find((c) => c.id === d.client_id)?.name}`.includes(
         search,

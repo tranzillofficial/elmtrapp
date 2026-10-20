@@ -10,7 +10,7 @@ export function PowerAlerts({
   compact?: boolean;
   onNavigate?: () => void;
 }) {
-  const { data, office } = useStore();
+  const { data, office, save, setError } = useStore();
   if (office.member && !office.permissions.includes("documents")) return null;
   const powers = expiringPowers(data.powers);
   if (!powers.length) return null;
@@ -23,25 +23,48 @@ export function PowerAlerts({
         <h2>تنبيهات التوكيلات ({powers.length})</h2>
         {!compact && <Link href="/powers">عرض التوكيلات</Link>}
       </div>
-      <p className="hint">التوكيلات المنتهية أو التي تنتهي خلال 30 يومًا.</p>
+      <p className="hint">
+        التوكيلات المستحقة للتنبيه حسب المدة المحددة لكل توكيل.
+      </p>
       {powers.slice(0, compact ? 10 : 3).map((p) => (
-        <Link
-          className="notification-row"
-          key={p.id}
-          href="/powers"
-          onClick={onNavigate}
-        >
-          <span>
-            <strong>
-              {p.principal_name}
-              {p.official_number ? ` · ${p.official_number}` : ""}
-            </strong>
-            <small>
-              {powerExpiryLabel(p.expires_on)} ·{" "}
-              {day(`${p.expires_on}T12:00:00`)}
-            </small>
-          </span>
-        </Link>
+        <div className="power-alert-row" key={p.id}>
+          <Link
+            className="notification-row"
+            href="/powers"
+            onClick={onNavigate}
+          >
+            <span>
+              <strong>
+                {p.principal_name}
+                {p.official_number ? ` · ${p.official_number}` : ""}
+              </strong>
+              <small>
+                {powerExpiryLabel(p.expires_on)} ·{" "}
+                {day(`${p.expires_on}T12:00:00`)}
+              </small>
+            </span>
+          </Link>
+          {(!office.member || office.permissions.includes("write")) && (
+            <button
+              className="text-button"
+              onClick={async () => {
+                try {
+                  await save(
+                    "powers",
+                    { reviewed_for_expiry: p.expires_on },
+                    p.id,
+                  );
+                } catch (e) {
+                  setError(
+                    e instanceof Error ? e.message : "تعذر تحديث التنبيه",
+                  );
+                }
+              }}
+            >
+              تمت المراجعة
+            </button>
+          )}
+        </div>
       ))}
       {compact && powers.length > 10 && (
         <Link href="/powers" onClick={onNavigate}>
